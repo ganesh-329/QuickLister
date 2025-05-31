@@ -16,9 +16,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   return (
     <div
       className={`
-        ${isOpen ? 'block' : 'hidden'}
-        w-64 bg-white border-r border-gray-200 p-4 transition duration-200 ease-in-out
-        ${isOpen ? 'fixed inset-y-0 left-0 z-30 md:static' : ''}
+        w-64 bg-white border-r border-gray-200 p-4 transition-all duration-300 ease-in-out
+        ${isOpen ? 'fixed inset-y-0 left-0 z-30 md:static' : 'fixed inset-y-0 -left-64 z-30 md:hidden'}
       `}
     >
       {/* User Actions Section */}

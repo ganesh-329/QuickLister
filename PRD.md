@@ -42,48 +42,38 @@ A location-centric microjob platform that connects service providers with job po
 ### 4.2 User Authentication & Verification
 
 - Aadhar-based authentication via DigiLocker
-- OTP verification for secure access
-- Cloudflare integration for bot prevention
 - Progressive profile completion indicators
-- Trust score visualization on profiles
+- Only those who verified through can post/apply for jobs
 
 ### 4.3 Job Discovery & Management
 
-- Map-based job visualization with distance indicators
+- Map-based job visualization 
 - AI recommendation panel (sliding bottom drawer)
 - Skill-based filtering using tag chips
 - Job details modal on pin tap with apply button
 - Job status tracking (applied, accepted, in-progress, completed)
 - History dashboard for both seekers and posters
 
-### 4.4 Messaging & Communication
-
-- In-app messaging via bottom sheet interface
-- Chat button on job preview
-- Automatic message suggestions via AI
-- Dispute resolution panel
-- Chat escalation options to admins
 
 ### 4.5 Payments & Financial Features
 
-- UPI integration for secure transactions
-- Escrow system for job completion verification
+- UPI integration for secure transactions between users who are posting and applying - we are only miiddleman 
+
 - Earnings dashboard with graphical visualization
 - Instant payout requests
 - Transaction history and receipt generation
 
 ### 4.6 AI Integration
 
-- Smart job matching algorithm
+
 - Fraudulent job detection
 - Price suggestion based on market rates
 - Chatbot assistant for platform navigation
-- Personalized job recommendations
-- Auto-categorization of skills and services
+
+
 
 ### 4.7 Community & Engagement
 
-- Leaderboard for top performers
 - Achievement badges and milestones
 - "Trust Circle" visualization for networked references
 - Rating and review system post-job completion
@@ -102,18 +92,15 @@ A location-centric microjob platform that connects service providers with job po
 
 - Google Maps JavaScript API integration for interactive maps
 - Geocoding API for address lookups
-- Distance Matrix API for travel time calculations
-- Places API for location suggestions
-- Geolocation for real-time tracking
 - Custom markers with job preview data
 - Map clustering for dense areas
-- Polygon support for service area definitions
+
 
 ### 5.2 Authentication & Security
 
 - DigiLocker API integration for Aadhar verification
 - Secure token-based authentication
-- Cloudflare protection against bots
+
 - Data encryption for sensitive information
 - Role-based access control
 - Environment variables for API key storage
@@ -128,7 +115,7 @@ A location-centric microjob platform that connects service providers with job po
 - Escrow mechanism for fund holding
 - Automatic commission calculation
 - Refund processing capabilities
-- Transaction logging and auditing
+
 
 ### 5.4 AI Implementation
 
@@ -151,8 +138,6 @@ A location-centric microjob platform that connects service providers with job po
 ### 6.1 User Registration
 
 1. Download app/visit website
-2. Enter phone number
-3. Verify OTP
 4. Connect Aadhar via DigiLocker
 5. Complete basic profile
 6. Set up UPI for payments
@@ -219,15 +204,7 @@ A location-centric microjob platform that connects service providers with job po
 - AI recommendation acceptance rate
 - Support ticket volume and resolution time
 
-## 9. Future Enhancements
 
-- Multi-language support
-- Advanced scheduling system
-- Skills verification and certification
-- Business accounts with team management
-- Subscription plans for premium features
-- Cross-platform desktop interface
-- API for third-party integrations
 
 ## 10. Technical Implementation Phases
 
@@ -251,71 +228,3 @@ A location-centric microjob platform that connects service providers with job po
 - Trust scoring algorithm
 - Advanced analytics
 - Community features
-
-## 11. Technology Stack
-
-### 11.1 Frontend
-
-- **Framework**: Next.js (React framework with SSR capabilities)
-- **UI Library**: Tailwind CSS + Shadcn UI components
-- **State Management**: Redux Toolkit for global state
-- **Maps**: Google Maps JavaScript API with React wrapper
-- **Real-time**: Socket.io client for live updates
-- **Forms**: React Hook Form with Zod validation
-- **HTTP Client**: Axios with interceptors
-- **Authentication**: NextAuth.js with custom providers
-- **Analytics**: Mixpanel or Amplitude
-
-### 11.2 Backend
-
-- **Framework**: Node.js with Express
-- **API Style**: RESTful with some GraphQL endpoints for complex queries
-- **Authentication**: JWT with refresh token rotation
-- **Validation**: Joi or Zod
-- **File Storage**: AWS S3 or Firebase Storage
-- **WebSockets**: Socket.io for real-time features
-- **Task Queue**: Bull with Redis for background jobs
-- **Notifications**: Firebase Cloud Messaging (FCM)
-
-### 11.3 Database
-
-- **Primary DB**: MongoDB (flexible schema for rapid development)
-- **Geospatial**: MongoDB's geospatial indexes and queries
-- **Caching**: Redis for performance optimization
-- **Search**: Elasticsearch for advanced search capabilities
-- **Analytics**: ClickHouse for event analytics
-
-### 11.4 DevOps & Infrastructure
-
-- **Hosting**: Vercel (frontend) + Railway or Render (backend)
-- **CI/CD**: GitHub Actions
-- **Monitoring**: Sentry for error tracking
-- **Environment Management**: Docker for development consistency
-- **Domain & SSL**: Cloudflare for DNS and SSL management
-- **CDN**: Cloudflare or Vercel Edge Network
-
-### 11.5 Third-Party Services
-
-- **SMS**: Twilio for OTP delivery
-- **Maps**: Google Maps Platform
-- **Payments**: Razorpay with UPI integration
-- **Verification**: DigiLocker API
-- **AI/ML**: TensorFlow.js for client-side inference, Hugging Face for NLP
-- **Image Processing**: Cloudinary or Imgix
-- **Email**: SendGrid or AWS SES
-
-### 11.6 Mobile Optimization
-
-- **PWA**: Workbox for service workers
-- **Offline Support**: IndexedDB for local data storage
-- **Performance**: Next.js Image optimization
-- **Accessibility**: ARIA compliant components
-
-### 11.7 Development Tools
-
-- **Language**: TypeScript for type safety
-- **Linting**: ESLint with Airbnb config
-- **Formatting**: Prettier
-- **Testing**: Jest for unit tests, Cypress for E2E
-- **Documentation**: Storybook for component documentation
-- **API Documentation**: Swagger/OpenAPI 

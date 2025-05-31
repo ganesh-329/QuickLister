@@ -4,8 +4,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import { config, isDevelopment } from './config/env';
-import { database } from './config/database';
+import { config, isDevelopment } from './config/env.js';
+import { database } from './config/database.js';
 
 // Create Express application
 const app = express();
