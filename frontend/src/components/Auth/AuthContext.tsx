@@ -1,17 +1,13 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-// Define types for authentication state
+// Simple User interface - matches backend
 export interface User {
   id: string;
   name: string;
   email: string;
   phone: string;
-  profileImage?: string;
-  isPhoneVerified: boolean;
-  isIdentityVerified: boolean;
-  trustScore: number;
-  accountStatus: 'active' | 'suspended' | 'deactivated';
+  createdAt: string;
 }
 
 interface AuthState {
@@ -31,7 +27,7 @@ interface AuthContextType extends AuthState {
   error: string | null;
 }
 
-interface SignupData {
+export interface SignupData {
   name: string;
   email: string;
   phone: string;
@@ -71,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     accessToken: localStorage.getItem('accessToken'),
     refreshToken: localStorage.getItem('refreshToken'),
   });
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,14 +96,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
       
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      if (!data.success) {
+        throw new Error(data.message || 'Login failed');
+      }
+      
+      localStorage.setItem('accessToken', data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
 
       setAuthState({
         isAuthenticated: true,
-        user: data.user,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
+        user: data.data.user,
+        accessToken: data.data.accessToken,
+        refreshToken: data.data.refreshToken,
       });
     } catch (error: any) {
       handleError(error);
@@ -121,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
@@ -133,14 +135,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
       
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      if (!data.success) {
+        throw new Error(data.message || 'Signup failed');
+      }
+      
+      localStorage.setItem('accessToken', data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
 
       setAuthState({
         isAuthenticated: true,
-        user: data.user,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
+        user: data.data.user,
+        accessToken: data.data.accessToken,
+        refreshToken: data.data.refreshToken,
       });
     } catch (error: any) {
       handleError(error);
@@ -153,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = useCallback(() => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
     setAuthState({
       isAuthenticated: false,
       user: null,
@@ -161,39 +169,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
-  // OTP verification
+  // OTP verification (simplified - no longer functional)
   const verifyOTP = useCallback(async (otp: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authState.accessToken}`,
-        },
-        body: JSON.stringify({ otp }),
-      });
-
-      if (!response.ok) {
-        throw new Error('OTP verification failed');
-      }
-
-      const data = await response.json();
-      setAuthState(prev => ({
-        ...prev,
-        user: {
-          ...prev.user!,
-          isPhoneVerified: true,
-        },
-      }));
-    } catch (error: any) {
-      handleError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [authState.accessToken]);
+    // OTP verification removed - just return success
+    console.log('OTP verification disabled');
+  }, []);
 
   // Token refresh function
   const refreshAuth = useCallback(async () => {
@@ -229,16 +209,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [authState.refreshToken, logout]);
 
+  // Initialize auth state from localStorage on app load
+  useEffect(() => {
+    const initializeAuth = () => {
+      const storedAccessToken = localStorage.getItem('accessToken');
+      const storedRefreshToken = localStorage.getItem('refreshToken');
+      const storedUser = localStorage.getItem('user');
+      let user = null;
+      if (storedUser) {
+        try {
+          user = JSON.parse(storedUser);
+        } catch {
+          user = null;
+        }
+      }
+      if (storedAccessToken && storedRefreshToken) {
+        setAuthState(prev => ({
+          ...prev,
+          isAuthenticated: true,
+          user: user,
+        }));
+      }
+      setIsInitialized(true);
+    };
+    initializeAuth();
+  }, []);
+
   // Auto refresh token before expiry
   useEffect(() => {
-    if (authState.accessToken) {
+    if (authState.accessToken && isInitialized) {
       const refreshInterval = setInterval(() => {
         refreshAuth();
       }, 14 * 60 * 1000); // Refresh every 14 minutes (token expires in 15)
 
       return () => clearInterval(refreshInterval);
     }
-  }, [authState.accessToken, refreshAuth]);
+  }, [authState.accessToken, refreshAuth, isInitialized]);
 
   // Error notification portal
   const ErrorNotification = error ? createPortal(

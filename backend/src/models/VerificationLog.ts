@@ -2,12 +2,12 @@ import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface IVerificationLog extends Document {
   userId: Types.ObjectId;
-  verificationType: 'phone' | 'email' | 'digilocker' | 'manual';
+  verificationType: 'email' | 'digilocker' | 'manual';
   status: 'pending' | 'verified' | 'failed' | 'expired';
   
   // External reference (NO sensitive data stored)
   verificationId: string; // External session/transaction ID
-  externalProvider?: string; // 'digilocker', 'twilio', etc.
+  externalProvider?: string; // 'digilocker', etc.
   
   // Audit information
   initiatedAt: Date;
@@ -16,14 +16,13 @@ export interface IVerificationLog extends Document {
   userAgent?: string;
   
   // Verification details (SECURE - no sensitive data)
-  verificationMethod?: string; // 'otp', 'oauth', etc.
+  verificationMethod?: string; // 'oauth', 'email_link', etc.
   attempts: number;
   maxAttempts: number;
   expiresAt: Date;
   
   // Result information (SAFE data only)
   verifiedName?: string; // For identity verification (from DigiLocker)
-  phoneNumber?: string; // Only for phone verification logs
   emailAddress?: string; // Only for email verification logs
   
   // Error tracking
@@ -39,47 +38,41 @@ const VerificationLogSchema = new Schema<IVerificationLog>({
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    index: true
   },
   
   verificationType: {
     type: String,
-    enum: ['phone', 'email', 'digilocker', 'manual'],
+    enum: ['email', 'digilocker', 'manual'],
     required: true,
-    index: true
   },
   
   status: {
     type: String,
     enum: ['pending', 'verified', 'failed', 'expired'],
     default: 'pending',
-    index: true
   },
   
-  // External reference (NO sensitive data)
+  // External reference (NO sensitive data stored)
   verificationId: {
     type: String,
     required: true,
-    index: true,
-    trim: true
+    trim: true,
   },
   
   externalProvider: {
     type: String,
     trim: true,
-    enum: ['digilocker', 'twilio', 'sendgrid', 'manual']
+    enum: ['digilocker', 'sendgrid', 'manual'],
   },
   
   // Audit information
   initiatedAt: {
     type: Date,
     default: Date.now,
-    index: true
   },
   
   completedAt: {
     type: Date,
-    index: true
   },
   
   ipAddress: {
@@ -93,85 +86,78 @@ const VerificationLogSchema = new Schema<IVerificationLog>({
         const ipv6Regex = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
         return ipv4Regex.test(ip) || ipv6Regex.test(ip) || ip === 'localhost';
       },
-      message: 'Invalid IP address format'
-    }
+      message: 'Invalid IP address format',
+    },
   },
   
   userAgent: {
     type: String,
     trim: true,
-    maxlength: 500
+    maxlength: 500,
   },
   
   // Verification details
   verificationMethod: {
     type: String,
-    enum: ['otp', 'oauth', 'email_link', 'manual'],
-    trim: true
+    enum: ['oauth', 'email_link', 'manual'],
+    trim: true,
   },
   
   attempts: {
     type: Number,
     default: 1,
     min: 1,
-    max: 10
+    max: 10,
   },
   
   maxAttempts: {
     type: Number,
     default: 3,
     min: 1,
-    max: 10
+    max: 10,
   },
   
   expiresAt: {
     type: Date,
     required: true,
-    index: true
   },
   
   // Safe result information
   verifiedName: {
     type: String,
     trim: true,
-    maxlength: 100
-  },
-  
-  phoneNumber: {
-    type: String,
-    trim: true,
-    match: /^[6-9]\d{9}$/ // Indian mobile number format
+    maxlength: 100,
   },
   
   emailAddress: {
     type: String,
     trim: true,
     lowercase: true,
-    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   },
   
   // Error tracking
   errorCode: {
     type: String,
     trim: true,
-    maxlength: 50
+    maxlength: 50,
   },
   
   errorMessage: {
     type: String,
     trim: true,
-    maxlength: 500
+    maxlength: 500,
   },
   
   // Additional metadata (for debugging, analytics)
   metadata: {
     type: Schema.Types.Mixed,
-    default: {}
-  }
+    default: {},
+  },
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toObject: { virtuals: true },
 });
 
 // Indexes for performance and querying
@@ -246,49 +232,41 @@ VerificationLogSchema.methods.canRetry = function(): boolean {
 // Static Methods
 VerificationLogSchema.statics.createVerificationLog = function(data: {
   userId: Types.ObjectId;
-  verificationType: 'phone' | 'email' | 'digilocker' | 'manual';
+  verificationType: 'email' | 'digilocker' | 'manual';
   verificationId: string;
+  externalProvider?: string;
   ipAddress: string;
   userAgent?: string;
-  externalProvider?: string;
   verificationMethod?: string;
-  expiryMinutes?: number;
   maxAttempts?: number;
-  phoneNumber?: string;
-  emailAddress?: string;
+  expiresIn?: number; // in minutes
+  metadata?: Record<string, any>;
 }) {
-  const expiryMinutes = data.expiryMinutes || 15; // Default 15 minutes
-  
+  const expiresAt = new Date();
+  expiresAt.setMinutes(expiresAt.getMinutes() + (data.expiresIn || 30)); // Default 30 minutes
+
   return this.create({
-    userId: data.userId,
-    verificationType: data.verificationType,
-    verificationId: data.verificationId,
-    ipAddress: data.ipAddress,
-    userAgent: data.userAgent,
-    externalProvider: data.externalProvider,
-    verificationMethod: data.verificationMethod,
-    expiresAt: new Date(Date.now() + expiryMinutes * 60 * 1000),
+    ...data,
+    expiresAt,
     maxAttempts: data.maxAttempts || 3,
-    phoneNumber: data.phoneNumber,
-    emailAddress: data.emailAddress
   });
 };
 
 VerificationLogSchema.statics.findActiveVerification = function(
   userId: Types.ObjectId, 
-  verificationType: string
+  verificationType: string,
 ) {
   return this.findOne({
     userId,
     verificationType,
     status: 'pending',
-    expiresAt: { $gte: new Date() }
+    expiresAt: { $gte: new Date() },
   }).sort({ initiatedAt: -1 });
 };
 
 VerificationLogSchema.statics.getUserVerificationHistory = function(
   userId: Types.ObjectId,
-  limit: number = 10
+  limit: number = 10,
 ) {
   return this.find({ userId })
     .sort({ initiatedAt: -1 })
@@ -298,23 +276,23 @@ VerificationLogSchema.statics.getUserVerificationHistory = function(
 
 VerificationLogSchema.statics.getVerificationStats = function(
   fromDate: Date,
-  toDate: Date = new Date()
+  toDate: Date = new Date(),
 ) {
   return this.aggregate([
     {
       $match: {
-        initiatedAt: { $gte: fromDate, $lte: toDate }
-      }
+        initiatedAt: { $gte: fromDate, $lte: toDate },
+      },
     },
     {
       $group: {
         _id: {
           type: '$verificationType',
-          status: '$status'
+          status: '$status',
         },
         count: { $sum: 1 },
-        avgAttempts: { $avg: '$attempts' }
-      }
+        avgAttempts: { $avg: '$attempts' },
+      },
     },
     {
       $group: {
@@ -323,12 +301,12 @@ VerificationLogSchema.statics.getVerificationStats = function(
           $push: {
             status: '$_id.status',
             count: '$count',
-            avgAttempts: '$avgAttempts'
-          }
+            avgAttempts: '$avgAttempts',
+          },
         },
-        totalCount: { $sum: '$count' }
-      }
-    }
+        totalCount: { $sum: '$count' },
+      },
+    },
   ]);
 };
 
@@ -337,19 +315,19 @@ VerificationLogSchema.statics.checkRateLimit = function(
   ipAddress: string,
   verificationType: string,
   timeWindowMinutes: number = 60,
-  maxAttempts: number = 10
+  maxAttempts: number = 10,
 ) {
   const since = new Date(Date.now() - timeWindowMinutes * 60 * 1000);
   
   return this.countDocuments({
     ipAddress,
     verificationType,
-    initiatedAt: { $gte: since }
+    initiatedAt: { $gte: since },
   }).then((count: number) => ({
     isAllowed: count < maxAttempts,
     currentCount: count,
     maxAllowed: maxAttempts,
-    resetTime: new Date(Date.now() + timeWindowMinutes * 60 * 1000)
+    resetTime: new Date(Date.now() + timeWindowMinutes * 60 * 1000),
   }));
 };
 
@@ -371,7 +349,6 @@ VerificationLogSchema.virtual('isSuccessful').get(function() {
   return this.status === 'verified';
 });
 
-// Create and export the model
 const VerificationLog = mongoose.model<IVerificationLog>('VerificationLog', VerificationLogSchema);
 
 export default VerificationLog;

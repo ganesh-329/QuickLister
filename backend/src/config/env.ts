@@ -23,18 +23,14 @@ const envSchema = z.object({
   // Google Maps API
   GOOGLE_MAPS_API_KEY: z.string().optional(),
 
-  // Twilio Configuration
-  TWILIO_ACCOUNT_SID: z.string().optional(),
-  TWILIO_AUTH_TOKEN: z.string().optional(),
-  TWILIO_PHONE_NUMBER: z.string().optional(),
+  // DigiLocker Configuration
+  DIGILOCKER_CLIENT_ID: z.string().optional(),
+  DIGILOCKER_CLIENT_SECRET: z.string().optional(),
+  DIGILOCKER_REDIRECT_URI: z.string().optional(),
 
   // Razorpay Configuration
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
-
-  // DigiLocker API
-  DIGILOCKER_CLIENT_ID: z.string().optional(),
-  DIGILOCKER_CLIENT_SECRET: z.string().optional(),
 
   // Cloudflare Configuration
   CLOUDFLARE_API_TOKEN: z.string().optional(),

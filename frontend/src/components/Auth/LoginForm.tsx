@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   onSignupClick: () => void;
-  onSuccess: () => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSignupClick, onSuccess }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSignupClick }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading, error } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login(email, password);
-      onSuccess();
+      navigate('/main');
     } catch (error) {
       // Error handling is managed by AuthContext
     }
@@ -23,7 +24,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSignupClick, onSuccess }) => {
 
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-center mb-6">Login to MJob</h2>
+      <h2 className="text-2xl font-bold text-center mb-6">Login to QuickLister</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email Input */}
@@ -38,6 +39,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSignupClick, onSuccess }) => {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter your email"
+            autoComplete="email"
             required
           />
         </div>
@@ -54,6 +56,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSignupClick, onSuccess }) => {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter your password"
+            autoComplete="current-password"
             required
           />
         </div>
@@ -82,13 +85,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSignupClick, onSuccess }) => {
         </button>
 
         {/* Additional Options */}
-        <div className="flex items-center justify-between mt-4">
-          <button 
-            type="button"
-            className="text-sm text-blue-600 hover:text-blue-500 focus:outline-none"
-          >
-            Forgot password?
-          </button>
+        <div className="flex items-center justify-end mt-4">
           <button
             type="button"
             className="text-sm text-blue-600 hover:text-blue-500 focus:outline-none"
@@ -97,27 +94,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSignupClick, onSuccess }) => {
             Create account
           </button>
         </div>
-
-        {/* Divider */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with</span>
-          </div>
-        </div>
-
-        {/* OTP Login Option */}
-        <button
-          type="button"
-          className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-          </svg>
-          Login with OTP
-        </button>
 
         {/* Error Message */}
         {error && (

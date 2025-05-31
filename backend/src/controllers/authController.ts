@@ -1,26 +1,11 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User, VerificationLog } from '../models/index.js';
-import { config } from '../config/env.js';
-import { 
-  validateData, 
-  registerSchema, 
-  loginSchema, 
-  phoneVerificationSchema,
-  otpRequestSchema 
-} from '../utils/validation.js';
-import { 
-  generateOTP, 
-  storeOTP, 
-  verifyOTP, 
-  sendOTP, 
-  canSendSMS 
-} from '../utils/sms.js';
+import { User } from '../models/index';
+import { config } from '../config/env';
+import { validateData, registerSchema, loginSchema } from '../utils/validation';
 
-// Generate JWT tokens with proper types
+// Generate JWT tokens
 const generateTokens = (userId: string): { accessToken: string; refreshToken: string } => {
-  // Use environment variables directly to avoid type issues
   const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
   const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret';
   
@@ -39,96 +24,58 @@ const generateTokens = (userId: string): { accessToken: string; refreshToken: st
   return { accessToken, refreshToken };
 };
 
-// User Registration
+// User Registration - SIMPLE
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Validate input data
-    const validation = validateData(registerSchema, req.body);
-    if (!validation.success) {
+    const { name, email, phone, password } = req.body;
+
+    // Basic validation
+    if (!name || !email || !phone || !password) {
       res.status(400).json({
         success: false,
-        message: 'Validation failed',
-        errors: validation.errors,
+        message: 'All fields are required',
       });
       return;
     }
 
-    const userData = validation.data!;
-
     // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [
-        { email: userData.email },
-        { phone: userData.phone }
-      ]
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { phone }] 
     });
 
     if (existingUser) {
       res.status(409).json({
         success: false,
-        message: existingUser.email === userData.email 
-          ? 'Email already registered' 
-          : 'Phone number already registered',
+        message: existingUser.email === email ? 'Email already registered' : 'Phone number already registered',
       });
       return;
     }
 
-    // Hash password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
-
-    // Create user with the actual User model structure
+    // Create user (password will be hashed automatically by pre-save hook)
     const user = new User({
-      name: userData.name,
-      email: userData.email,
-      phone: userData.phone,
-      password: hashedPassword,
-      dateOfBirth: userData.dateOfBirth,
-      gender: userData.gender,
-      location: userData.location || {
-        type: 'Point',
-        coordinates: [0, 0], // Default coordinates, user can update later
-      },
-      skills: userData.skills || [],
-      // Set verification status
-      isPhoneVerified: false,
-      isEmailVerified: false,
-      isIdentityVerified: false,
+      name,
+      email,
+      phone,
+      password
     });
 
     await user.save();
 
-    // Log registration
-    await VerificationLog.create({
-      userId: user._id,
-      type: 'registration',
-      status: 'completed',
-      details: {
-        registrationMethod: 'email_phone',
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent'),
-      },
-    });
-
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
-    // Return user data (excluding sensitive information)
-    const userResponse = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      isEmailVerified: user.isEmailVerified,
-      isPhoneVerified: user.isPhoneVerified,
-      profileCompletion: user.profileCompletionPercentage,
-    };
-
+    // Return user data (excluding password)
     res.status(201).json({
       success: true,
       message: 'Registration successful',
       data: {
-        user: userResponse,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          createdAt: user.createdAt,
+        },
         accessToken,
         refreshToken,
       },
@@ -139,26 +86,24 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Registration failed',
-      error: config.NODE_ENV === 'development' ? error.message : undefined,
+      error: config.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
 };
 
-// User Login
+// User Login - SIMPLE
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Validate input data
-    const validation = validateData(loginSchema, req.body);
-    if (!validation.success) {
+    const { email, password } = req.body;
+
+    // Basic validation
+    if (!email || !password) {
       res.status(400).json({
         success: false,
-        message: 'Validation failed',
-        errors: validation.errors,
+        message: 'Email and password are required',
       });
       return;
     }
-
-    const { email, password, rememberMe } = validation.data!;
 
     // Find user by email and include password field
     const user = await User.findOne({ email }).select('+password');
@@ -170,38 +115,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if account is active
-    if (user.accountStatus !== 'active') {
-      res.status(403).json({
-        success: false,
-        message: 'Account is suspended. Please contact support.',
-      });
-      return;
-    }
-
-    // Verify password - check if password field exists
-    if (!user.password) {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid email or password',
-      });
-      return;
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      // Log failed login attempt
-      await VerificationLog.create({
-        userId: user._id,
-        type: 'login',
-        status: 'failed',
-        details: {
-          reason: 'invalid_password',
-          ipAddress: req.ip,
-          userAgent: req.get('User-Agent'),
-        },
-      });
-
       res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -212,38 +128,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
-    // Update last login
-    user.lastActiveAt = new Date();
-    await user.save();
-
-    // Log successful login
-    await VerificationLog.create({
-      userId: user._id,
-      type: 'login',
-      status: 'completed',
-      details: {
-        rememberMe,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent'),
-      },
-    });
-
     // Return user data
-    const userResponse = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      isEmailVerified: user.isEmailVerified,
-      isPhoneVerified: user.isPhoneVerified,
-      profileCompletion: user.profileCompletionPercentage,
-    };
-
     res.json({
       success: true,
       message: 'Login successful',
       data: {
-        user: userResponse,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          createdAt: user.createdAt,
+        },
         accessToken,
         refreshToken,
       },
@@ -254,12 +150,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Login failed',
-      error: config.NODE_ENV === 'development' ? error.message : undefined,
+      error: config.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
 };
 
-// User Logout
+// User Logout - SIMPLE
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
     res.json({
@@ -271,31 +167,27 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Logout failed',
-      error: config.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
 
-// Refresh Token
+// Refresh Token - SIMPLE
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
   try {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      res.status(401).json({
+      res.status(400).json({
         success: false,
-        message: 'Refresh token required',
+        message: 'Refresh token is required',
       });
       return;
     }
 
     // Verify refresh token
-    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret';
-    const decoded = jwt.verify(refreshToken, jwtRefreshSecret) as any;
-    
-    // Find user
-    const user = await User.findById(decoded.userId);
-    if (!user) {
+    const decoded = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET) as { userId: string; type: string };
+
+    if (decoded.type !== 'refresh') {
       res.status(401).json({
         success: false,
         message: 'Invalid refresh token',
@@ -304,134 +196,35 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     }
 
     // Generate new tokens
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user._id.toString());
+    const tokens = generateTokens(decoded.userId);
 
     res.json({
       success: true,
       message: 'Token refreshed successfully',
-      data: {
-        accessToken,
-        refreshToken: newRefreshToken,
-      },
+      data: tokens,
     });
-
   } catch (error: any) {
     console.error('Token refresh error:', error);
     res.status(401).json({
       success: false,
-      message: 'Token refresh failed',
-      error: config.NODE_ENV === 'development' ? error.message : undefined,
+      message: 'Invalid refresh token',
     });
   }
 };
 
-// Request OTP for phone verification
-export const requestOTP = async (req: Request, res: Response): Promise<void> => {
+// Get User Profile - SIMPLE
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Validate input
-    const validation = validateData(otpRequestSchema, req.body);
-    if (!validation.success) {
-      res.status(400).json({
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({
         success: false,
-        message: 'Validation failed',
-        errors: validation.errors,
+        message: 'Authentication required',
       });
       return;
     }
 
-    const { phone } = validation.data!;
-
-    // Check rate limiting
-    const rateLimitCheck = canSendSMS(phone);
-    if (!rateLimitCheck.canSend) {
-      res.status(429).json({
-        success: false,
-        message: rateLimitCheck.message,
-        retryAfter: rateLimitCheck.retryAfter,
-      });
-      return;
-    }
-
-    // Generate and store OTP
-    const otp = generateOTP();
-    storeOTP(phone, otp);
-
-    // Send OTP via SMS
-    const smsResult = await sendOTP(phone, otp);
-    
-    if (!smsResult.success) {
-      res.status(500).json({
-        success: false,
-        message: smsResult.message,
-      });
-      return;
-    }
-
-    // Log OTP request
-    const user = await User.findOne({ phone });
-    if (user) {
-      await VerificationLog.create({
-        userId: user._id,
-        type: 'phone_verification',
-        status: 'pending',
-        details: {
-          action: 'otp_requested',
-          messageId: smsResult.messageId,
-          ipAddress: req.ip,
-          userAgent: req.get('User-Agent'),
-        },
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'OTP sent successfully',
-      data: {
-        expiresIn: 300, // 5 minutes
-        messageId: smsResult.messageId,
-      },
-    });
-
-  } catch (error: any) {
-    console.error('OTP request error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to send OTP',
-      error: config.NODE_ENV === 'development' ? error.message : undefined,
-    });
-  }
-};
-
-// Verify phone with OTP
-export const verifyPhone = async (req: Request, res: Response): Promise<void> => {
-  try {
-    // Validate input
-    const validation = validateData(phoneVerificationSchema, req.body);
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: validation.errors,
-      });
-      return;
-    }
-
-    const { phone, otp } = validation.data!;
-
-    // Verify OTP
-    const otpResult = verifyOTP(phone, otp);
-    
-    if (!otpResult.success) {
-      res.status(400).json({
-        success: false,
-        message: otpResult.message,
-        attemptsLeft: otpResult.attemptsLeft,
-      });
-      return;
-    }
-
-    // Find and update user
-    const user = await User.findOne({ phone });
+    const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({
         success: false,
@@ -440,81 +233,25 @@ export const verifyPhone = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Update phone verification status
-    user.isPhoneVerified = true;
-    user.verificationDate = new Date();
-    await user.save();
-
-    // Log successful verification
-    await VerificationLog.create({
-      userId: user._id,
-      type: 'phone_verification',
-      status: 'completed',
-      details: {
-        action: 'otp_verified',
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent'),
-      },
-    });
-
     res.json({
       success: true,
-      message: 'Phone number verified successfully',
+      message: 'Profile retrieved successfully',
       data: {
-        isPhoneVerified: true,
-        profileCompletion: user.profileCompletionPercentage,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        }
       },
     });
-
-  } catch (error: any) {
-    console.error('Phone verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Phone verification failed',
-      error: config.NODE_ENV === 'development' ? error.message : undefined,
-    });
-  }
-};
-
-// Get current user profile
-export const getProfile = async (req: Request, res: Response): Promise<void> => {
-  try {
-    // User is already attached by auth middleware
-    const user = (req as any).user;
-
-    const userResponse = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      dateOfBirth: user.dateOfBirth,
-      gender: user.gender,
-      bio: user.bio,
-      location: user.location,
-      skills: user.skills,
-      availability: user.availability,
-      notificationSettings: user.notificationSettings,
-      privacySettings: user.privacySettings,
-      isEmailVerified: user.isEmailVerified,
-      isPhoneVerified: user.isPhoneVerified,
-      isIdentityVerified: user.isIdentityVerified,
-      profileCompletion: user.profileCompletionPercentage,
-      trustScore: user.calculateTrustScore(),
-      createdAt: user.createdAt,
-      lastActiveAt: user.lastActiveAt,
-    };
-
-    res.json({
-      success: true,
-      data: { user: userResponse },
-    });
-
   } catch (error: any) {
     console.error('Get profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get profile',
-      error: config.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };

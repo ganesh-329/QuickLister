@@ -33,7 +33,7 @@ class Database {
       });
 
       this.isConnected = true;
-      console.log(`✅ MongoDB connected successfully to: ${mongoUri}`);
+      
 
       // Handle connection events
       mongoose.connection.on('error', (error) => {

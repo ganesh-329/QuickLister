@@ -87,19 +87,6 @@ const MapControls: React.FC<MapControlsProps> = ({
           <LayersIcon size={24} className="text-gray-700" />
         </button>
         
-        {/* Search overlay toggle */}
-        <button 
-          onClick={onToggleSearchOverlay}
-          className={`p-3 rounded-full shadow-lg focus:outline-none transition-all ${
-            isSearchOverlayActive
-              ? 'bg-blue-500 text-white hover:bg-blue-600'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
-          }`}
-          title="Search Location"
-        >
-          <FaSearch size={24} />
-        </button>
-        
         {/* Manual location picker */}
         <button 
           onClick={onToggleLocationPicker}

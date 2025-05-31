@@ -12,6 +12,9 @@ import {
   MAP_OPTIONS 
 } from '../../config/maps';
 
+// Static libraries array to prevent reloading warning
+const GOOGLE_MAPS_LIBRARIES: ('places')[] = ['places'];
+
 // Mock data for initial display
 const MOCK_GIGS = [{
   id: 1,
@@ -72,10 +75,10 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
   const [filteredGigs, setFilteredGigs] = useState(MOCK_GIGS);
   const circleRef = useRef<google.maps.Circle | null>(null);
 
-  // Load Google Maps API
+  // Load Google Maps API with static libraries array
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: ['places']
+    libraries: GOOGLE_MAPS_LIBRARIES
   });
 
   useEffect(() => {
@@ -234,14 +237,15 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
       }
 
       try {
-        const location = await geocodeAddress(searchQuery);
-        if (location) {
-          setCenter(location);
-          if (mapRef) {
-            mapRef.panTo(location);
-            mapRef.setZoom(15);
-          }
-        }
+        // Note: geocodeAddress function needs to be imported or implemented
+        // const location = await geocodeAddress(searchQuery);
+        // if (location) {
+        //   setCenter(location);
+        //   if (mapRef) {
+        //     mapRef.panTo(location);
+        //     mapRef.setZoom(15);
+        //   }
+        // }
       } catch (error) {
         console.error('Error geocoding address:', error);
       }

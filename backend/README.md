@@ -32,6 +32,33 @@ nano .env
 MONGODB_URI=mongodb://localhost:27017/mjob
 JWT_SECRET=your-super-secret-jwt-key-at-least-32-characters-long
 JWT_REFRESH_SECRET=your-super-secret-refresh-key-at-least-32-characters-long
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Google Maps API
+GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+
+# DigiLocker Configuration
+DIGILOCKER_CLIENT_ID=your-digilocker-client-id
+DIGILOCKER_CLIENT_SECRET=your-digilocker-client-secret
+DIGILOCKER_REDIRECT_URI=http://localhost:5173/auth/digilocker/callback
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID=your-razorpay-key-id
+RAZORPAY_KEY_SECRET=your-razorpay-key-secret
+
+# Email Configuration
+SMTP_HOST=your-smtp-host
+SMTP_PORT=587
+SMTP_USER=your-smtp-username
+SMTP_PASS=your-smtp-password
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# CORS Configuration
+CORS_ORIGIN=http://localhost:5173
 ```
 
 4. **Start the Server**
@@ -190,3 +217,175 @@ MIT License - See LICENSE file for details.
 ---
 
 **Status**: ✅ Authentication system complete and ready for frontend integration!
+
+## Setup Instructions
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Create a `.env` file in the root directory with the following variables:
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database Configuration
+MONGODB_URI=your-mongodb-uri
+
+# JWT Configuration
+JWT_SECRET=your-jwt-secret
+JWT_REFRESH_SECRET=your-jwt-refresh-secret
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Google Maps API
+GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+
+# DigiLocker Configuration
+DIGILOCKER_CLIENT_ID=your-digilocker-client-id
+DIGILOCKER_CLIENT_SECRET=your-digilocker-client-secret
+DIGILOCKER_REDIRECT_URI=http://localhost:5173/auth/digilocker/callback
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID=your-razorpay-key-id
+RAZORPAY_KEY_SECRET=your-razorpay-key-secret
+
+# Email Configuration
+SMTP_HOST=your-smtp-host
+SMTP_PORT=587
+SMTP_USER=your-smtp-username
+SMTP_PASS=your-smtp-password
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# CORS Configuration
+CORS_ORIGIN=http://localhost:5173
+```
+
+3. Configure DigiLocker:
+   - Register as a DigiLocker partner at https://digitallocker.gov.in/
+   - Get your client ID and secret
+   - Set up your redirect URI in the DigiLocker dashboard
+   - Add the credentials to your `.env` file
+
+4. Start the development server:
+```bash
+npm run dev
+```
+
+## API Documentation
+
+### Authentication Endpoints
+
+#### Register User
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword",
+  "name": "John Doe"
+}
+```
+
+#### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+
+#### DigiLocker Authentication
+```http
+GET /api/auth/digilocker/authorize
+```
+
+#### DigiLocker Callback
+```http
+GET /api/auth/digilocker/callback
+```
+
+### User Endpoints
+
+#### Get Profile
+```http
+GET /api/auth/profile
+Authorization: Bearer <token>
+```
+
+#### Update Profile
+```http
+PUT /api/auth/profile
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "location": {
+    "type": "Point",
+    "coordinates": [72.8777, 19.0760]
+  }
+}
+```
+
+## Development
+
+### Project Structure
+```
+src/
+├── config/         # Configuration files
+├── controllers/    # Route controllers
+├── middleware/     # Custom middleware
+├── models/         # Database models
+├── routes/         # API routes
+├── utils/          # Utility functions
+└── server.ts       # Entry point
+```
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm test` - Run tests
+
+## Security
+
+- JWT-based authentication
+- Rate limiting
+- Input validation with Zod
+- Secure password hashing
+- CORS protection
+- Helmet security headers
+
+## Error Handling
+
+The API uses a global error handler that returns consistent error responses:
+
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable error message",
+    "details": {} // Optional additional error details
+  }
+}
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request

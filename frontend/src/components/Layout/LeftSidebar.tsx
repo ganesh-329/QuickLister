@@ -4,18 +4,22 @@ interface LeftSidebarProps {
   isOpen: boolean;
   isAuthenticated: boolean;
   onLoginClick?: () => void;
+  onClose: () => void;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({ 
   isOpen,
   isAuthenticated,
-  onLoginClick
+  onLoginClick,
+  onClose
 }) => {
   return (
     <div
-      className={`fixed inset-y-0 left-0 transform ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      } w-64 bg-white border-r border-gray-200 p-4 transition duration-200 ease-in-out lg:relative lg:inset-0 lg:transform-none z-30`}
+      className={`
+        ${isOpen ? 'block' : 'hidden'}
+        w-64 bg-white border-r border-gray-200 p-4 transition duration-200 ease-in-out
+        ${isOpen ? 'fixed inset-y-0 left-0 z-30 md:static' : ''}
+      `}
     >
       {/* User Actions Section */}
       {isAuthenticated ? (
