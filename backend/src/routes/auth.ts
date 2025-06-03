@@ -13,10 +13,10 @@ const router = express.Router();
 // Public routes
 router.post('/register', register);
 router.post('/login', login);
-router.post('/refresh-token', refreshToken);
+router.post('/refresh', refreshToken);
 
 // Protected routes
 router.post('/logout', authenticate, logout);
-router.get('/profile', authenticate, getProfile);
+router.get('/me', authenticate, getProfile);
 
 export default router;

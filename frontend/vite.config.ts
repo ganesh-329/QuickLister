@@ -12,4 +12,12 @@ export default defineConfig({
       },
     },
   },
+  // Enable client-side routing support for production builds
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
 })

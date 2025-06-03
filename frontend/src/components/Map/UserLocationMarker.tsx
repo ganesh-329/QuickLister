@@ -10,48 +10,85 @@ const UserLocationMarker: React.FC<UserLocationMarkerProps> = ({ mapRef }) => {
   const [accuracy, setAccuracy] = useState<number>(0);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [initialCenter, setInitialCenter] = useState(true);
+  const [isWatching, setIsWatching] = useState(false);
 
-  // Start watching position when component mounts
+  // Start watching position when component mounts and mapRef is available
   useEffect(() => {
-    if ('geolocation' in navigator) {
-      const id = navigator.geolocation.watchPosition(
-        (position) => {
-          const newPos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          
-          setPosition(newPos);
-          setAccuracy(position.coords.accuracy);
-          
-          // Center map on user location on first position acquisition
-          // or when significant movement is detected
-          if (mapRef && initialCenter) {
-            mapRef.panTo(newPos);
-            mapRef.setZoom(15);
-            setInitialCenter(false);
-          }
-        },
-        (error) => {
-          console.error('Error watching position:', error);
-        },
-        { 
-          enableHighAccuracy: true,
-          maximumAge: 5000, // 5 seconds
-          timeout: 5000 // 5 second timeout
+    if (!mapRef || isWatching || !('geolocation' in navigator)) return;
+
+    console.log('Starting geolocation watch...');
+    setIsWatching(true);
+    
+    // First, try to get current position immediately
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newPos = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        
+        console.log('Got initial position:', newPos);
+        setPosition(newPos);
+        setAccuracy(position.coords.accuracy);
+        
+        // Center map on user location immediately
+        if (mapRef && initialCenter) {
+          mapRef.panTo(newPos);
+          mapRef.setZoom(15);
+          setInitialCenter(false);
         }
-      );
-      
-      setWatchId(id);
-    }
+      },
+      (error) => {
+        console.warn('Error getting initial position:', error);
+        // Continue with watch even if initial position fails
+      },
+      { 
+        enableHighAccuracy: true,
+        maximumAge: 10000, // Accept cached position up to 10 seconds old
+        timeout: 8000 // 8 second timeout for initial position
+      }
+    );
+
+    // Then start continuous watching
+    const id = navigator.geolocation.watchPosition(
+      (position) => {
+        const newPos = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        
+        console.log('Position updated:', newPos);
+        setPosition(newPos);
+        setAccuracy(position.coords.accuracy);
+        
+        // Center map on user location on first position acquisition
+        if (mapRef && initialCenter) {
+          mapRef.panTo(newPos);
+          mapRef.setZoom(15);
+          setInitialCenter(false);
+        }
+      },
+      (error) => {
+        console.error('Error watching position:', error);
+      },
+      { 
+        enableHighAccuracy: true,
+        maximumAge: 30000, // Accept cached position up to 30 seconds old
+        timeout: 10000 // 10 second timeout
+      }
+    );
+    
+    setWatchId(id);
     
     // Clean up by stopping the watch when component unmounts
     return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
+      console.log('Cleaning up geolocation watch...');
+      if (id !== null) {
+        navigator.geolocation.clearWatch(id);
       }
+      setIsWatching(false);
     };
-  }, [mapRef, initialCenter]);
+  }, [mapRef]); // Remove initialCenter from dependencies to prevent unnecessary re-runs
 
   if (!position) return null;
 
@@ -86,4 +123,4 @@ const UserLocationMarker: React.FC<UserLocationMarkerProps> = ({ mapRef }) => {
   );
 };
 
-export default UserLocationMarker; 
+export default UserLocationMarker;

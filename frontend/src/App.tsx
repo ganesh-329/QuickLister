@@ -1,19 +1,95 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import MapView from './components/Map/MapView';
-import TopBar from './components/Layout/TopBar';
-import LeftSidebar from './components/Layout/LeftSidebar';
-import RightPanel from './components/Layout/RightPanel';
-import FloatingActionButton from './components/UI/FloatingActionButton';
-import FloatingChatbot from './components/UI/FloatingChatbot';
 import LoadingScreen from './components/UI/LoadingScreen';
 import LandingPage from './components/Pages/LandingPage';
 import AuthSelectionPage from './components/Auth/AuthSelectionPage';
 import Footer from './components/Layout/Footer';
 import LogoHeader from './components/Layout/LogoHeader';
+import Dashboard from './components/Dashboard/Dashboard';
+import Profile from './components/Profile/Profile';
+import AuthenticatedLayout from './components/Layout/AuthenticatedLayout';
 import { AuthProvider, useAuth, LoginForm, SignupForm } from './components/Auth';
 
 type PlaceType = google.maps.places.PlaceResult;
+
+// Navigation wrapper components with useNavigate hook
+function LandingPageWrapper() {
+  const navigate = useNavigate();
+  return <LandingPage onGetStarted={() => navigate('/auth-selection')} />;
+}
+
+function AuthSelectionWrapper() {
+  const navigate = useNavigate();
+  return (
+    <AuthSelectionPage
+      onLoginClick={() => navigate('/login')}
+      onSignupClick={() => navigate('/signup')}
+      onBack={() => navigate('/')}
+    />
+  );
+}
+
+function LoginFormWrapper() {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
+      <LogoHeader />
+      <div className="flex-1 flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <LoginForm onSignupClick={() => navigate('/signup')} />
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
+function SignupFormWrapper() {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
+      <LogoHeader />
+      <div className="flex-1 flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <SignupForm
+            onLoginClick={() => navigate('/login')}
+            onSuccess={() => navigate('/main')}
+          />
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
+// Enhanced layout wrapper that manages shared state for the map route
+function MapRouteWithSharedState() {
+  // Shared state that will be passed to both AuthenticatedLayout and MapView
+  const [activeFilters, setActiveFilters] = React.useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [selectedLocation, setSelectedLocation] = React.useState<any>(null);
+  const [isMapsApiLoaded, setIsMapsApiLoaded] = React.useState(false);
+
+  return (
+    <AuthenticatedLayout
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      activeFilters={activeFilters}
+      setActiveFilters={setActiveFilters}
+      selectedLocation={selectedLocation}
+      setSelectedLocation={setSelectedLocation}
+      isMapsApiLoaded={isMapsApiLoaded}
+    >
+      <MapView 
+        searchQuery={searchQuery}
+        activeFilters={activeFilters}
+        selectedLocation={selectedLocation}
+        onMapsApiLoaded={setIsMapsApiLoaded}
+      />
+    </AuthenticatedLayout>
+  );
+}
 
 // App wrapper with auth provider
 export function AppWithAuth() {
@@ -28,104 +104,96 @@ export function AppWithAuth() {
   );
 }
 
-function MainApp() {
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [rightPanelOpen, setRightPanelOpen] = React.useState(false);
-  const [activeFilters, setActiveFilters] = React.useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [selectedLocation, setSelectedLocation] = React.useState<any>(null);
-  const [isMapsApiLoaded, setIsMapsApiLoaded] = React.useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-100 relative">
-      <TopBar 
-        toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        toggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onLocationSelect={setSelectedLocation}
-        isMapsApiLoaded={isMapsApiLoaded}
-        isAuthenticated={isAuthenticated}
-        onLogout={handleLogout}
-        user={user}
-      />
-      <div className="flex flex-1 relative overflow-hidden">
-        <LeftSidebar 
-          isOpen={sidebarOpen}
-          isAuthenticated={isAuthenticated}
-          onLoginClick={() => navigate('/login')}
-          onClose={() => setSidebarOpen(false)}
-        />
-        <main className="flex-1 relative transition-all duration-300">
-          <MapView 
-            searchQuery={searchQuery}
-            activeFilters={activeFilters}
-            selectedLocation={selectedLocation}
-            onMapsApiLoaded={setIsMapsApiLoaded}
-          />
-        </main>
-        <RightPanel 
-          isOpen={rightPanelOpen}
-          setActiveFilters={setActiveFilters}
-          activeFilters={activeFilters}
-        />
-      </div>
-      <FloatingActionButton isAuthenticated={isAuthenticated} />
-      <FloatingChatbot />
-      <Footer />
-    </div>
-  );
-}
-
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
+
+  if (!isInitialized) {
+    return <LoadingScreen />;
+  }
+  
   return (
-    <Router>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <Routes>
-        <Route path="/" element={isAuthenticated ? <Navigate to="/main" /> : <LandingPage onGetStarted={() => window.location.href = '/auth-selection'} />} />
-        <Route path="/auth-selection" element={isAuthenticated ? <Navigate to="/main" /> : <AuthSelectionPage onLoginClick={() => window.location.href = '/login'} onSignupClick={() => window.location.href = '/signup'} onBack={() => window.location.href = '/'} />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/main" /> : <LandingPageWrapper />} />
+        <Route path="/auth-selection" element={isAuthenticated ? <Navigate to="/main" /> : <AuthSelectionWrapper />} />
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/main" /> : (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
-              <LogoHeader />
-              <div className="flex-1 flex items-center justify-center px-4">
-                <div className="max-w-md w-full">
-                  <LoginForm onSignupClick={() => window.location.href = '/signup'} />
-                </div>
-              </div>
-              <Footer />
-            </div>
-          )}
+          element={isAuthenticated ? <Navigate to="/main" /> : <LoginFormWrapper />}
         />
         <Route
           path="/signup"
-          element={isAuthenticated ? <Navigate to="/main" /> : (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
-              <LogoHeader />
-              <div className="flex-1 flex items-center justify-center px-4">
-                <div className="max-w-md w-full">
-                  <SignupForm onLoginClick={() => window.location.href = '/login'} onSuccess={() => window.location.href = '/main'} />
-                </div>
-              </div>
-              <Footer />
-            </div>
-          )}
+          element={isAuthenticated ? <Navigate to="/main" /> : <SignupFormWrapper />}
         />
-        <Route path="/main" element={<MainApp />} />
+        
+        {/* Map route with shared state management */}
+        <Route 
+          path="/main" 
+          element={
+            isAuthenticated ? (
+              <MapRouteWithSharedState />
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
+        />
+        
+        {/* Other authenticated routes use default AuthenticatedLayout */}
+        <Route 
+          path="/dashboard" 
+          element={
+            isAuthenticated ? (
+              <AuthenticatedLayout>
+                <Dashboard />
+              </AuthenticatedLayout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
+        />
+        <Route 
+          path="/dashboard/*" 
+          element={
+            isAuthenticated ? (
+              <AuthenticatedLayout>
+                <Dashboard />
+              </AuthenticatedLayout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            isAuthenticated ? (
+              <AuthenticatedLayout>
+                <Profile />
+              </AuthenticatedLayout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
+        />
+        <Route 
+          path="/help" 
+          element={
+            isAuthenticated ? (
+              <AuthenticatedLayout>
+                <div className="p-8">
+                  <h1 className="text-2xl font-bold text-gray-800 mb-4">Help & Support</h1>
+                  <p className="text-gray-600">Coming Soon</p>
+                </div>
+              </AuthenticatedLayout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
+        />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

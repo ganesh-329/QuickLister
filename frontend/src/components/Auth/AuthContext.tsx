@@ -1,14 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import AuthService, { User, LoginData, RegisterData } from '../../services/authService';
+import profileService, { UserProfile, UpdateProfileData } from '../../services/profileService';
 
-// Simple User interface - matches backend
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  createdAt: string;
-}
+// Export User interface from AuthService
+export type { User } from '../../services/authService';
+export type { RegisterData as SignupData } from '../../services/authService';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -19,19 +16,13 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  signup: (userData: SignupData) => Promise<void>;
-  logout: () => void;
+  signup: (userData: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
   verifyOTP: (otp: string) => Promise<void>;
   refreshAuth: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
-}
-
-export interface SignupData {
-  name: string;
-  email: string;
-  phone: string;
-  password: string;
+  isInitialized: boolean;
 }
 
 // Create context with default values
@@ -42,11 +33,12 @@ const AuthContext = createContext<AuthContextType>({
   refreshToken: null,
   login: async () => {},
   signup: async () => {},
-  logout: () => {},
+  logout: async () => {},
   verifyOTP: async () => {},
   refreshAuth: async () => {},
   isLoading: false,
   error: null,
+  isInitialized: false,
 });
 
 // Custom hook for using auth context
@@ -64,8 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     user: null,
-    accessToken: localStorage.getItem('accessToken'),
-    refreshToken: localStorage.getItem('refreshToken'),
+    accessToken: AuthService.getToken(),
+    refreshToken: localStorage.getItem('refresh_token'),
   });
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Handle API errors
   const handleError = (error: any) => {
-    const message = error.response?.data?.error || error.message || 'An error occurred';
+    const message = error.message || 'An error occurred';
     setError(message);
     setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
   };
@@ -84,31 +76,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
-      const data = await response.json();
+      const response = await AuthService.login({ email, password });
       
-      if (!data.success) {
-        throw new Error(data.message || 'Login failed');
-      }
-      
-      localStorage.setItem('accessToken', data.data.accessToken);
-      localStorage.setItem('refreshToken', data.data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
+      localStorage.setItem('user', JSON.stringify(response.user));
 
       setAuthState({
         isAuthenticated: true,
-        user: data.data.user,
-        accessToken: data.data.accessToken,
-        refreshToken: data.data.refreshToken,
+        user: response.user,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
       });
     } catch (error: any) {
       handleError(error);
@@ -118,36 +94,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Signup function
-  const signup = useCallback(async (userData: SignupData) => {
+  const signup = useCallback(async (userData: RegisterData) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Signup failed');
-      }
-
-      const data = await response.json();
+      const response = await AuthService.register(userData);
       
-      if (!data.success) {
-        throw new Error(data.message || 'Signup failed');
-      }
-      
-      localStorage.setItem('accessToken', data.data.accessToken);
-      localStorage.setItem('refreshToken', data.data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
+      localStorage.setItem('user', JSON.stringify(response.user));
 
       setAuthState({
         isAuthenticated: true,
-        user: data.data.user,
-        accessToken: data.data.accessToken,
-        refreshToken: data.data.refreshToken,
+        user: response.user,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
       });
     } catch (error: any) {
       handleError(error);
@@ -157,16 +117,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Logout function
-  const logout = useCallback(() => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    setAuthState({
-      isAuthenticated: false,
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-    });
+  const logout = useCallback(async () => {
+    try {
+      await AuthService.logout();
+    } catch (error) {
+      console.warn('Logout API call failed, but continuing with local cleanup');
+    } finally {
+      localStorage.removeItem('user');
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+      });
+    }
   }, []);
 
   // OTP verification (simplified - no longer functional)
@@ -178,42 +142,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Token refresh function
   const refreshAuth = useCallback(async () => {
     try {
-      if (!authState.refreshToken) {
-        throw new Error('No refresh token available');
-      }
-
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: authState.refreshToken }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Token refresh failed');
-      }
-
-      const data = await response.json();
+      const response = await AuthService.refreshToken();
       
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-
       setAuthState(prev => ({
         ...prev,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        user: data.user,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
       }));
     } catch (error: any) {
       handleError(error);
-      logout(); // Logout on refresh failure
+      await logout(); // Logout on refresh failure
     }
-  }, [authState.refreshToken, logout]);
+  }, [logout]);
 
   // Initialize auth state from localStorage on app load
   useEffect(() => {
     const initializeAuth = () => {
-      const storedAccessToken = localStorage.getItem('accessToken');
-      const storedRefreshToken = localStorage.getItem('refreshToken');
+      const storedAccessToken = AuthService.getToken();
+      const storedRefreshToken = localStorage.getItem('refresh_token');
       const storedUser = localStorage.getItem('user');
       let user = null;
       if (storedUser) {
@@ -223,12 +169,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           user = null;
         }
       }
-      if (storedAccessToken && storedRefreshToken) {
-        setAuthState(prev => ({
-          ...prev,
+      // Check if we have valid authentication data
+      if (storedAccessToken && user) {
+        setAuthState({
           isAuthenticated: true,
           user: user,
-        }));
+          accessToken: storedAccessToken,
+          refreshToken: storedRefreshToken,
+        });
+      } else {
+        // Clear any partial auth state
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+        });
       }
       setIsInitialized(true);
     };
@@ -246,9 +202,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [authState.accessToken, refreshAuth, isInitialized]);
 
+  // Listen for auth:logout events from API interceptor
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      logout();
+    };
+
+    window.addEventListener('auth:logout', handleAuthLogout);
+    return () => window.removeEventListener('auth:logout', handleAuthLogout);
+  }, [logout]);
+
   // Error notification portal
   const ErrorNotification = error ? createPortal(
-    <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
+    <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50">
       {error}
     </div>,
     document.body
@@ -265,6 +231,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshAuth,
         isLoading,
         error,
+        isInitialized,
       }}
     >
       {children}
@@ -273,4 +240,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export default AuthContext;
+export { AuthContext };
+export default AuthProvider;

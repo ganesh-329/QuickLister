@@ -406,7 +406,7 @@ GigSchema.methods.cancelGig = function() {
 // Static Methods
 GigSchema.statics.findNearby = function(
   coordinates: [number, number], 
-  radiusKm: number = 10, 
+  radiusKm: number = 15, 
   filters: any = {}
 ) {
   return this.find({
@@ -426,7 +426,7 @@ GigSchema.statics.findNearby = function(
     .sort({ urgency: -1, postedAt: -1 });
 };
 
-GigSchema.statics.findBySkills = function(skills: string[], coordinates?: [number, number], radiusKm: number = 50) {
+GigSchema.statics.findBySkills = function(skills: string[], coordinates?: [number, number], radiusKm: number = 15) {
   const query: any = {
     'skills.name': { $in: skills },
     status: 'posted',
@@ -450,7 +450,7 @@ GigSchema.statics.findBySkills = function(skills: string[], coordinates?: [numbe
     .sort({ urgency: -1, postedAt: -1 });
 };
 
-GigSchema.statics.searchGigs = function(searchTerm: string, coordinates?: [number, number], radiusKm: number = 25) {
+GigSchema.statics.searchGigs = function(searchTerm: string, coordinates?: [number, number], radiusKm: number = 15) {
   const query: any = {
     $text: { $search: searchTerm },
     status: 'posted',

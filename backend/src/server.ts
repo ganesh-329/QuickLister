@@ -31,7 +31,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Rate limiting
+// Rate limiting - more lenient in development
 const limiter = rateLimit({
   windowMs: config.RATE_LIMIT_WINDOW_MS,
   max: config.RATE_LIMIT_MAX_REQUESTS,
@@ -40,6 +40,14 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip rate limiting for localhost in development
+  skip: (req) => {
+    if (isDevelopment()) {
+      const ip = req.ip || req.connection.remoteAddress;
+      return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+    }
+    return false;
+  },
 });
 
 app.use(limiter);
@@ -85,6 +93,9 @@ app.get('/health', async (req, res) => {
 
 // Import routes
 import authRoutes from './routes/auth.js';
+import gigRoutes from './routes/gigs.js';
+import applicationRoutes from './routes/applications.js';
+import profileRoutes from './routes/profile.js';
 
 // API routes
 app.get('/api', (req, res) => {
@@ -98,6 +109,15 @@ app.get('/api', (req, res) => {
 
 // Authentication routes
 app.use('/api/auth', authRoutes);
+
+// Profile routes
+app.use('/api/profile', profileRoutes);
+
+// Gig routes
+app.use('/api/gigs', gigRoutes);
+
+// Application routes
+app.use('/api/applications', applicationRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

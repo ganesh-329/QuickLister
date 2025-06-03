@@ -6,7 +6,10 @@ export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
+  avatar?: string;
   password: string;
   createdAt: Date;
   updatedAt: Date;
@@ -32,10 +35,31 @@ const UserSchema = new Schema<IUser>({
   },
   phone: {
     type: String,
-    required: [true, 'Phone is required'],
-    unique: true,
+    required: false,
     trim: true,
-    match: /^[6-9]\d{9}$/ // Indian mobile number format
+    validate: {
+      validator: function(v: string) {
+        if (!v) return true; // Allow empty values
+        return /^[+]?[1-9]?[0-9]{7,15}$/.test(v); // International phone format
+      },
+      message: 'Please enter a valid phone number'
+    }
+  },
+  location: {
+    type: String,
+    required: false,
+    trim: true,
+    maxlength: [100, 'Location cannot exceed 100 characters']
+  },
+  bio: {
+    type: String,
+    required: false,
+    trim: true,
+    maxlength: [500, 'Bio cannot exceed 500 characters']
+  },
+  avatar: {
+    type: String,
+    required: false
   },
   password: {
     type: String,

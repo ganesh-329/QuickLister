@@ -1,9 +1,7 @@
 import React from 'react';
-import { LayersIcon, AlertCircleIcon, MapPinIcon, PlusIcon, MinusIcon, ArrowLeftIcon } from 'lucide-react';
-import { FaLocationArrow, FaMapMarkerAlt, FaSatellite, FaRoad, FaSearch } from 'react-icons/fa';
+import { LayersIcon, MapPinIcon, PlusIcon, MinusIcon, ArrowLeftIcon } from 'lucide-react';
 
 interface MapControlsProps {
-  setCenter: (position: google.maps.LatLngLiteral) => void;
   onToggleLocationPicker: () => void;
   resetToLiveLocation: () => void;
   isLocationPickerActive: boolean;
@@ -11,21 +9,16 @@ interface MapControlsProps {
   mapRef: google.maps.Map | null;
   searchRadius: number | null;
   onRadiusChange: (radius: number | null) => void;
-  onToggleSearchOverlay: () => void;
-  isSearchOverlayActive: boolean;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({ 
-  setCenter,
   onToggleLocationPicker,
   resetToLiveLocation,
   isLocationPickerActive,
   hasManualLocation,
   mapRef,
   searchRadius,
-  onRadiusChange,
-  onToggleSearchOverlay,
-  isSearchOverlayActive
+  onRadiusChange
 }) => {
   // Handle zoom in
   const handleZoomIn = () => {
@@ -112,16 +105,6 @@ const MapControls: React.FC<MapControlsProps> = ({
             <ArrowLeftIcon size={24} />
           </button>
         )}
-      </div>
-      
-      {/* Report issue button (bottom left) */}
-      <div className="absolute bottom-6 left-6 z-[400] flex gap-3">
-        <button 
-          className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none transition-all"
-          title="Report Issue"
-        >
-          <AlertCircleIcon size={24} className="text-gray-700" />
-        </button>
       </div>
 
       {/* Radius Control */}
