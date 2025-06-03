@@ -6,12 +6,12 @@ import LandingPage from './components/Pages/LandingPage';
 import AuthSelectionPage from './components/Auth/AuthSelectionPage';
 import Footer from './components/Layout/Footer';
 import LogoHeader from './components/Layout/LogoHeader';
-import Dashboard from './components/Dashboard/Dashboard';
+import { MyGigs } from './components/Dashboard/MyGigs';
 import Profile from './components/Profile/Profile';
 import AuthenticatedLayout from './components/Layout/AuthenticatedLayout';
 import { AuthProvider, useAuth, LoginForm, SignupForm } from './components/Auth';
 
-type PlaceType = google.maps.places.PlaceResult;
+
 
 // Navigation wrapper components with useNavigate hook
 function LandingPageWrapper() {
@@ -148,7 +148,7 @@ function App() {
           element={
             isAuthenticated ? (
               <AuthenticatedLayout>
-                <Dashboard />
+                <MyGigs />
               </AuthenticatedLayout>
             ) : (
               <Navigate to="/login" />
@@ -160,7 +160,7 @@ function App() {
           element={
             isAuthenticated ? (
               <AuthenticatedLayout>
-                <Dashboard />
+                <MyGigs />
               </AuthenticatedLayout>
             ) : (
               <Navigate to="/login" />
