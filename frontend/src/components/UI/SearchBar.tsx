@@ -10,7 +10,7 @@ interface SearchBarProps {
 const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
-  onLocationSelect,
+  onLocationSelect: _onLocationSelect,
   isMapsApiLoaded
 }) => {
   return (

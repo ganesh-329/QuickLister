@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import AuthService, { User, LoginData, RegisterData } from '../../services/authService';
-import profileService, { UserProfile, UpdateProfileData } from '../../services/profileService';
+import AuthService, { User, RegisterData } from '../../services/authService';
 
 // Export User interface from AuthService
 export type { User } from '../../services/authService';
@@ -134,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // OTP verification (simplified - no longer functional)
-  const verifyOTP = useCallback(async (otp: string) => {
+  const verifyOTP = useCallback(async (_otp: string) => {
     // OTP verification removed - just return success
     console.log('OTP verification disabled');
   }, []);
@@ -149,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       }));
+
     } catch (error: any) {
       handleError(error);
       await logout(); // Logout on refresh failure

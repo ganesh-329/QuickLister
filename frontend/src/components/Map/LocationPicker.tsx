@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Marker } from '@react-google-maps/api';
-import { MapPinIcon, CheckIcon, XIcon } from 'lucide-react';
+import { CheckIcon, XIcon } from 'lucide-react';
 
 interface LocationPickerProps {
   isActive: boolean;

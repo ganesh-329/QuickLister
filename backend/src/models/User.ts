@@ -1,18 +1,10 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { IUserData } from '../../../shared/types/index.js';
 
-// Simple User interface - only what we need
-export interface IUser extends Document {
+// Backend User interface that extends the shared data interface with Document
+export interface IUser extends Omit<IUserData, '_id'>, Document {
   _id: mongoose.Types.ObjectId;
-  name: string;
-  email: string;
-  phone?: string;
-  location?: string;
-  bio?: string;
-  avatar?: string;
-  password: string;
-  createdAt: Date;
-  updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 

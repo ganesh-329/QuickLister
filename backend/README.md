@@ -1,6 +1,6 @@
-# MJob Platform Backend
+# QuickLister Backend
 
-A robust Node.js/Express backend for the MJob platform with authentication, phone verification, and database integration.
+A robust Node.js/Express backend for the QuickLister platform with authentication, phone verification, and database integration.
 
 ## 🚀 Quick Start
 
@@ -29,7 +29,7 @@ nano .env
 3. **Required Environment Variables**
 ```env
 # Minimum required for development
-MONGODB_URI=mongodb://localhost:27017/mjob
+MONGODB_URI=mongodb://localhost:27017/quicklister
 JWT_SECRET=your-super-secret-jwt-key-at-least-32-characters-long
 JWT_REFRESH_SECRET=your-super-secret-refresh-key-at-least-32-characters-long
 JWT_EXPIRES_IN=15m
@@ -175,7 +175,7 @@ npm run test:coverage
   "environment": "development",
   "database": {
     "status": "connected",
-    "name": "mjob"
+    "name": "quicklister"
   },
   "memory": {
     "used": 45.67,
@@ -207,8 +207,7 @@ The API returns consistent error responses:
 1. **Frontend Integration** - Connect React components to API
 2. **Gig Management** - CRUD operations for gigs
 3. **Search & Discovery** - Geospatial search implementation
-4. **Real-time Features** - Socket.io for messaging
-5. **Payment Integration** - Razorpay payment processing
+4. **Payment Integration** - Razorpay payment processing
 
 ## 📝 License
 

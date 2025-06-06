@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
-import { User } from '../models';
-import { config } from '../config/env';
+import { User } from '../models/index.js';
+import { config } from '../config/env.js';
 
 // Extend Express Request interface to include user
 declare global {
@@ -34,10 +34,18 @@ export const authenticate = async (
     }
 
     const token = authHeader.split(' ')[1];
+    if (!token) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid token format',
+      });
+      return;
+    }
 
     // Verify token
-    const jwtSecret: string = process.env.JWT_SECRET || 'fallback-secret-key-for-development-only';
-    const decoded = jwt.verify(token, jwtSecret) as any;
+    const jwtSecret = config.JWT_SECRET;
+    
+    const decoded = jwt.verify(token, jwtSecret) as unknown as { userId: string; type: string };
 
     if (decoded.type !== 'access') {
       res.status(401).json({
@@ -61,7 +69,7 @@ export const authenticate = async (
     req.user = {
       id: user._id.toString(),
       email: user.email,
-      phone: user.phone,
+      phone: user.phone || '',
     };
 
     next();

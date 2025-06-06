@@ -5,7 +5,6 @@ import LeftSidebar from './LeftSidebar';
 import RightPanel from './RightPanel';
 import FloatingActionButton from '../UI/FloatingActionButton';
 import FloatingChatbot from '../UI/FloatingChatbot';
-import Footer from './Footer';
 import { useAuth } from '../Auth';
 
 interface AuthenticatedLayoutProps {
@@ -14,8 +13,6 @@ interface AuthenticatedLayoutProps {
   setSearchQuery?: (query: string) => void;
   activeFilters?: string[];
   setActiveFilters?: (filters: string[]) => void;
-  selectedLocation?: any;
-  setSelectedLocation?: (location: any) => void;
   isMapsApiLoaded?: boolean;
 }
 
@@ -25,25 +22,29 @@ function AuthenticatedLayout({
   setSearchQuery: externalSetSearchQuery,
   activeFilters: externalActiveFilters,
   setActiveFilters: externalSetActiveFilters,
-  selectedLocation: externalSelectedLocation,
-  setSelectedLocation: externalSetSelectedLocation,
   isMapsApiLoaded: externalIsMapsApiLoaded
 }: AuthenticatedLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  // Persist sidebar state across navigation using localStorage
+  const [sidebarOpen, setSidebarOpen] = React.useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [rightPanelOpen, setRightPanelOpen] = React.useState(false);
+
+  // Update localStorage when sidebar state changes
+  React.useEffect(() => {
+    localStorage.setItem('sidebarOpen', JSON.stringify(sidebarOpen));
+  }, [sidebarOpen]);
   
   // Use external state if provided, otherwise use internal state
   const [internalActiveFilters, setInternalActiveFilters] = React.useState<string[]>([]);
   const [internalSearchQuery, setInternalSearchQuery] = React.useState('');
-  const [internalSelectedLocation, setInternalSelectedLocation] = React.useState<any>(null);
-  const [internalIsMapsApiLoaded, setInternalIsMapsApiLoaded] = React.useState(false);
+  const [internalIsMapsApiLoaded] = React.useState(false);
   
   const activeFilters = externalActiveFilters ?? internalActiveFilters;
   const setActiveFilters = externalSetActiveFilters ?? setInternalActiveFilters;
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
   const setSearchQuery = externalSetSearchQuery ?? setInternalSearchQuery;
-  const selectedLocation = externalSelectedLocation ?? internalSelectedLocation;
-  const setSelectedLocation = externalSetSelectedLocation ?? setInternalSelectedLocation;
   const isMapsApiLoaded = externalIsMapsApiLoaded ?? internalIsMapsApiLoaded;
 
   const { isAuthenticated, user, logout } = useAuth();
@@ -60,32 +61,31 @@ function AuthenticatedLayout({
     navigate('/');
   };
 
-  // Just use children as-is since props are now passed from the parent
-  const enhancedChildren = children;
-
   return (
-    <div className="flex flex-col h-screen w-full bg-gray-100 relative">
+    <div className="flex flex-col h-screen w-full bg-gray-100 relative overflow-hidden">
       <TopBar 
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         toggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        onLocationSelect={setSelectedLocation}
+        onLocationSelect={() => {}}
         isMapsApiLoaded={isMapsApiLoaded}
         isAuthenticated={isAuthenticated}
         onLogout={handleLogout}
         user={user}
       />
-      <div className="flex flex-1 relative">
+      <div className="flex flex-1 relative min-h-0">
         <LeftSidebar 
           isOpen={sidebarOpen}
           isAuthenticated={isAuthenticated}
           onLoginClick={() => navigate('/login')}
-          onClose={() => setSidebarOpen(false)}
           onLogout={handleLogout}
+          onClose={() => setSidebarOpen(false)}
         />
-        <main className="flex-1 relative transition-all duration-300 overflow-y-auto">
-          {children}
+        <main className="flex-1 relative transition-all duration-300 overflow-y-auto h-full">
+          <div className="h-full overflow-y-auto">
+            {children}
+          </div>
         </main>
         <RightPanel 
           isOpen={rightPanelOpen}
@@ -96,7 +96,6 @@ function AuthenticatedLayout({
       </div>
       <FloatingActionButton isAuthenticated={isAuthenticated} />
       <FloatingChatbot />
-      <Footer />
     </div>
   );
 }

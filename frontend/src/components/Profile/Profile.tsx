@@ -31,14 +31,15 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-          <p className="mt-2 text-gray-600">
-            Manage your account settings and profile information.
-          </p>
-        </div>
+    <div className="h-full bg-gray-50 flex flex-col">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+            <p className="mt-1 text-gray-600">
+              Manage your account settings and profile information.
+            </p>
+          </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {/* Profile Header */}
@@ -184,38 +185,6 @@ const Profile: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Account Settings */}
-          <div className="px-6 py-6 border-t border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Account Settings</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900">Email Notifications</h4>
-                  <p className="text-sm text-gray-500">Receive notifications about new gigs and applications</p>
-                </div>
-                <button
-                  type="button"
-                  className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-blue-600 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  <span className="translate-x-5 inline-block h-5 w-5 transform rounded-full bg-white transition duration-200 ease-in-out"></span>
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900">SMS Notifications</h4>
-                  <p className="text-sm text-gray-500">Receive text messages for urgent updates</p>
-                </div>
-                <button
-                  type="button"
-                  className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  <span className="translate-x-0 inline-block h-5 w-5 transform rounded-full bg-white transition duration-200 ease-in-out"></span>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Danger Zone */}
@@ -231,6 +200,7 @@ const Profile: React.FC = () => {
               </p>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

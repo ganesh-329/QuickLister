@@ -12,7 +12,6 @@ const envSchema = z.object({
 
   // Database Configuration
   MONGODB_URI: z.string().min(1, 'MongoDB URI is required'),
-  MONGODB_TEST_URI: z.string().optional(),
 
   // JWT Configuration
   JWT_SECRET: z.string().min(32, 'JWT secret must be at least 32 characters'),
@@ -79,13 +78,6 @@ export const isProduction = () => config.NODE_ENV === 'production';
 // Helper function to check if we're in test mode
 export const isTest = () => config.NODE_ENV === 'test';
 
-// Database URI with fallback for test environment
-export const getDatabaseUri = () => {
-  if (isTest() && config.MONGODB_TEST_URI) {
-    return config.MONGODB_TEST_URI;
-  }
-  return config.MONGODB_URI;
-};
 
 // Logging configuration
 export const getLogLevel = () => {

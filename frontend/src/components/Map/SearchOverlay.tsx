@@ -15,8 +15,6 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [showPredictions, setShowPredictions] = useState(false);
-  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,21 +23,14 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     }
   }, [isActive]);
 
-  useEffect(() => {
-    // Initialize services
-    autocompleteService.current = new window.google.maps.places.AutocompleteService();
-    placesService.current = new window.google.maps.places.PlacesService(
-      document.createElement('div')
-    );
-  }, []);
-
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
     
     if (value.length > 2) {
       try {
-        const response = await autocompleteService.current?.getPlacePredictions({
+        const autocompleteService = new google.maps.places.AutocompleteService();
+        const response = await autocompleteService.getPlacePredictions({
           input: value,
           types: ['geocode', 'establishment'],
           componentRestrictions: { country: 'in' }
@@ -59,8 +50,12 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
 
   const handlePredictionClick = async (prediction: google.maps.places.AutocompletePrediction) => {
     try {
+      const placesService = new google.maps.places.PlacesService(
+        document.createElement('div')
+      );
+      
       const place = await new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
-        placesService.current?.getDetails(
+        placesService.getDetails(
           {
             placeId: prediction.place_id,
             fields: ['geometry', 'name', 'formatted_address']

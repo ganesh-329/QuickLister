@@ -1,23 +1,20 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/index';
-import { config } from '../config/env';
-import { validateData, registerSchema, loginSchema } from '../utils/validation';
+import { User } from '../models/index.js';
+import { config } from '../config/env.js';
+import { validateData, registerSchema, loginSchema } from '../utils/validation.js';
 
 // Generate JWT tokens
 const generateTokens = (userId: string): { accessToken: string; refreshToken: string } => {
-  const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
-  const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret';
-  
   const accessToken = jwt.sign(
     { userId, type: 'access' },
-    jwtSecret,
+    config.JWT_SECRET,
     { expiresIn: '15m' }
   );
 
   const refreshToken = jwt.sign(
     { userId, type: 'refresh' },
-    jwtRefreshSecret,
+    config.JWT_REFRESH_SECRET,
     { expiresIn: '7d' }
   );
 

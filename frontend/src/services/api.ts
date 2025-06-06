@@ -1,11 +1,11 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -19,15 +19,15 @@ export const setAuthToken = (token: string | null) => {
   authToken = token;
   if (token) {
     api.defaults.headers.authorization = `Bearer ${token}`;
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem('access_token', token);
   } else {
     delete api.defaults.headers.authorization;
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('access_token');
   }
 };
 
 // Initialize token from localStorage
-const savedToken = localStorage.getItem('auth_token');
+const savedToken = localStorage.getItem('access_token');
 if (savedToken) {
   setAuthToken(savedToken);
 }

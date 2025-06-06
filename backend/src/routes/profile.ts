@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, updateProfile, updateAvatar } from '../controllers/profileController.js';
+import { getProfile, updateProfile, updateAvatar, getAvatarSuggestions } from '../controllers/profileController.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
@@ -13,7 +13,10 @@ router.get('/', getProfile);
 // PUT /api/profile - Update user profile
 router.put('/', updateProfile);
 
-// POST /api/profile/avatar - Update profile avatar (placeholder)
+// POST /api/profile/avatar - Update profile avatar
 router.post('/avatar', updateAvatar);
+
+// GET /api/profile/avatar/suggestions - Get avatar suggestions
+router.get('/avatar/suggestions', getAvatarSuggestions);
 
 export default router;

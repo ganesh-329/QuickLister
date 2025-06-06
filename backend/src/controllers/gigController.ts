@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Gig } from '../models/index.js';
 import { config } from '../config/env.js';
+import mongoose from 'mongoose';
 
 // Use the global Express Request interface that already includes user
 interface AuthRequest extends Request {}
@@ -401,7 +402,7 @@ export const acceptApplication = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    const gig = await Gig.findById(gigId);
+    const gig = await Gig.findById(gigId).populate('applications.applicantId', 'name email');
     if (!gig) {
       res.status(404).json({
         success: false,
@@ -437,6 +438,11 @@ export const acceptApplication = async (req: AuthRequest, res: Response): Promis
     gig.assignedTo = application.applicantId;
     gig.status = 'assigned';
 
+    // Get rejected applications for notifications
+    const rejectedApplications = gig.applications.filter(
+      (app: any) => app._id.toString() !== applicationId && app.status === 'pending'
+    );
+
     // Reject all other applications
     gig.applications.forEach((app: any) => {
       if (app._id.toString() !== applicationId && app.status === 'pending') {
@@ -456,6 +462,68 @@ export const acceptApplication = async (req: AuthRequest, res: Response): Promis
     res.status(500).json({
       success: false,
       message: 'Failed to accept application',
+      error: config.NODE_ENV === 'development' ? error.message : 'Internal server error',
+    });
+  }
+};
+
+// Reject application
+export const rejectApplication = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { gigId, applicationId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+      return;
+    }
+
+    const gig = await Gig.findById(gigId);
+    if (!gig) {
+      res.status(404).json({
+        success: false,
+        message: 'Gig not found',
+      });
+      return;
+    }
+
+    // Check if user owns the gig
+    if (gig.posterId.toString() !== userId) {
+      res.status(403).json({
+        success: false,
+        message: 'Not authorized to manage applications for this gig',
+      });
+      return;
+    }
+
+    const application = gig.applications.find(
+      (app: any) => app._id.toString() === applicationId
+    );
+    if (!application) {
+      res.status(404).json({
+        success: false,
+        message: 'Application not found',
+      });
+      return;
+    }
+
+    // Update application status
+    application.status = 'rejected';
+    await gig.save();
+
+    res.json({
+      success: true,
+      message: 'Application rejected successfully',
+      data: { gig },
+    });
+  } catch (error: any) {
+    console.error('Reject application error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reject application',
       error: config.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
@@ -531,8 +599,17 @@ export const getUserApplications = async (req: AuthRequest, res: Response): Prom
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
 
+    // Convert userId to ObjectId for comparison
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    // First get total count for pagination
+    const total = await Gig.countDocuments({
+      'applications.applicantId': userObjectId
+    });
+
+    // Build match query
     let matchQuery: any = {
-      'applications.applicantId': userId
+      'applications.applicantId': userObjectId
     };
 
     if (status) {
@@ -542,7 +619,7 @@ export const getUserApplications = async (req: AuthRequest, res: Response): Prom
     const applications = await Gig.aggregate([
       { $match: matchQuery },
       { $unwind: '$applications' },
-      { $match: { 'applications.applicantId': userId } },
+      { $match: { 'applications.applicantId': userObjectId } },
       ...(status ? [{ $match: { 'applications.status': status } }] : []),
       { $sort: { 'applications.appliedAt': -1 } },
       { $skip: skip },
@@ -565,7 +642,13 @@ export const getUserApplications = async (req: AuthRequest, res: Response): Prom
           location: 1,
           payment: 1,
           status: 1,
-          application: '$applications',
+          application: {
+            _id: '$applications._id',
+            status: '$applications.status',
+            appliedAt: '$applications.appliedAt',
+            message: '$applications.message',
+            proposedRate: '$applications.proposedRate'
+          },
           poster: {
             name: '$poster.name',
             email: '$poster.email',

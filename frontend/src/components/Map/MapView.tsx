@@ -5,6 +5,7 @@ import MapControls from './MapControls';
 import UserLocationMarker from './UserLocationMarker';
 import LocationPicker from './LocationPicker';
 import SearchOverlay from './SearchOverlay';
+import GigMarker from './GigMarker';
 import Modal from '../UI/Modal';
 import GigDetailsModal from '../Gig/GigDetailsModal';
 import { useGigStore } from '../../stores/gigStore';
@@ -32,7 +33,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
     loading, 
     error, 
     fetchGigs, 
- 
     setUserLocation, 
     searchGigs,
     selectedGig,
@@ -49,7 +49,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
   const [markerObjects, setMarkerObjects] = useState<google.maps.Marker[]>([]);
   const [searchRadius, setSearchRadius] = useState<number | null>(null);
   const [filteredGigs, setFilteredGigs] = useState(gigs);
-  const [gigsInRadius, setGigsInRadius] = useState<number>(0);
   const [isSearchOverlayActive, setIsSearchOverlayActive] = useState(false);
 
   // Load Google Maps API with static libraries array
@@ -82,7 +81,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
 
   // Initialize location tracking when component mounts (navigation to Browse Jobs)
   useEffect(() => {
-
     setIsInitialLocationSet(false);
     setUserDefinedLocation(null);
     setShowUserLocation(true);
@@ -108,7 +106,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
   // Automatically get user's location on initial load or when navigating to Browse Jobs
   useEffect(() => {
     if (isLoaded && navigator.geolocation && !isInitialLocationSet && showUserLocation) {
-
       // Get current location when component first loads
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -192,11 +189,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
     }
   }, [mapRef, setUserLocation, fetchGigs]);
 
-  // Toggle search overlay
-  const toggleSearchOverlay = useCallback(() => {
-    setIsSearchOverlayActive(prev => !prev);
-  }, []);
-
   // Update marker clustering when filtered gigs change
   useEffect(() => {
     if (!mapRef || !window.google) return;
@@ -207,42 +199,13 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
     }
     markerObjects.forEach(marker => marker.setMap(null));
     
-    // Create new markers for filtered gigs (always show them, even during location picking)
-    const newMarkers = filteredGigs.map(gig => {
-      const marker = new window.google.maps.Marker({
-        position: { 
-          lat: gig.location.coordinates[1],
-          lng: gig.location.coordinates[0] 
-        },
-        map: mapRef,
-        title: gig.title,
-        // Make markers slightly transparent during location picking to show they're still there
-        opacity: isLocationPickerActive ? 0.6 : 1.0
-      });
-      
-      // Only allow clicking on gig markers when not in location picker mode
-      if (!isLocationPickerActive) {
-        marker.addListener('click', () => setSelectedGig(gig));
-      }
-      
-      return marker;
-    });
+    // Clear markers array as we're now using GigMarker components
+    setMarkerObjects([]);
     
-    // Create clusterer
-    if (newMarkers.length > 0) {
-      markerClustererRef.current = new MarkerClusterer({
-        map: mapRef,
-        markers: newMarkers,
-      });
-    }
+    // MarkerClusterer will be handled differently with custom components
+    // For now, we'll render individual GigMarker components
     
-    setMarkerObjects(newMarkers);
-    
-    return () => {
-      newMarkers.forEach(marker => marker.setMap(null));
-      if (markerClustererRef.current) markerClustererRef.current.clearMarkers();
-    };
-  }, [filteredGigs, mapRef, isLocationPickerActive, setSelectedGig]);
+  }, [filteredGigs, mapRef, isLocationPickerActive]);
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = useCallback((lat1: number, lng1: number, lat2: number, lng2: number): number => {
@@ -274,9 +237,8 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
         );
         return distance <= searchRadius;
       });
-      setGigsInRadius(gigsWithinRadius.length);
-    } else {
-      setGigsInRadius(0);
+      // Update UI to show number of gigs in radius
+      console.log(`Found ${gigsWithinRadius.length} gigs within ${searchRadius}m radius`);
     }
   }, [searchRadius, filteredGigs, userDefinedLocation, center, calculateDistance]);
 
@@ -312,6 +274,12 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
       setSearchSelectedLocation(newLocation);
     }
   }, [selectedLocation]);
+
+  // Handle selected gig click
+  const handleGigClick = useCallback((gigId: string) => {
+    const gig = filteredGigs.find(g => g._id === gigId);
+    setSelectedGig(gig || null);
+  }, [filteredGigs, setSelectedGig]);
 
   if (loadError) {
     return (
@@ -373,7 +341,16 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
           />
         )}
 
-
+        {/* Render Gig Markers */}
+        {!isLocationPickerActive && filteredGigs.map((gig) => (
+          <GigMarker
+            key={gig._id}
+            gig={gig}
+            isSelected={selectedGig?._id === gig._id}
+            onClick={handleGigClick}
+            mapRef={mapRef}
+          />
+        ))}
 
         {searchRadius && !isLocationPickerActive && (
           <Circle
@@ -404,7 +381,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
           mapRef={mapRef}
           searchRadius={searchRadius}
           onRadiusChange={handleRadiusChange}
-
         />
       </GoogleMap>
 
@@ -434,8 +410,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
           </button>
         </div>
       )}
-
-
 
       {/* Gig Details Modal */}
       {selectedGig && (

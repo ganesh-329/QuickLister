@@ -1,165 +1,33 @@
-import api, { apiCall } from './api';
+import api, { apiCall, handleApiError } from './api';
+import {
+  Gig,
+  GigLocation,
+  RequiredSkill,
+  PaymentInfo,
+  Timeline,
+  Application,
+  CreateGigData,
+  GetGigsParams,
+  GetGigsResponse,
+  ApplyToGigData
+} from '../../../shared/types';
 
-// Types
-export interface GigLocation {
-  type: 'Point';
-  coordinates: [number, number]; // [longitude, latitude]
-  address: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  pincode?: string;
-  landmark?: string;
-}
+// Re-export types for backward compatibility
+export type {
+  Gig,
+  GigLocation,
+  RequiredSkill,
+  PaymentInfo,
+  Timeline,
+  Application,
+  CreateGigData,
+  GetGigsParams,
+  GetGigsResponse,
+  ApplyToGigData
+};
 
-export interface RequiredSkill {
-  name: string;
-  category: string;
-  proficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
-  isRequired: boolean;
-}
+// All interfaces are now imported from shared types
 
-export interface PaymentInfo {
-  rate: number;
-  currency: string;
-  paymentType: 'hourly' | 'fixed' | 'daily' | 'weekly';
-  totalBudget?: number;
-  advancePayment?: number;
-  paymentMethod: 'cash' | 'upi' | 'bank_transfer' | 'razorpay';
-}
-
-export interface Timeline {
-  startDate?: string;
-  endDate?: string;
-  duration?: number; // in hours
-  deadline?: string;
-  isFlexible: boolean;
-  preferredTime?: 'morning' | 'afternoon' | 'evening' | 'night' | 'anytime';
-}
-
-export interface Application {
-  _id: string;
-  applicantId: {
-    _id: string;
-    name: string;
-    email: string;
-    phone: string;
-  };
-  appliedAt: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
-  proposedRate?: number;
-  message?: string;
-  portfolioLinks?: string[];
-  estimatedDuration?: number;
-  availability?: string;
-}
-
-export interface Gig {
-  _id: string;
-  title: string;
-  description: string;
-  category: string;
-  subCategory?: string;
-  urgency: 'low' | 'medium' | 'high' | 'urgent';
-  location: GigLocation;
-  isRemote: boolean;
-  allowsRemote: boolean;
-  serviceRadius?: number;
-  skills: RequiredSkill[];
-  experienceLevel: 'entry' | 'intermediate' | 'experienced' | 'expert';
-  toolsRequired?: string[];
-  materialsProvided: boolean;
-  payment: PaymentInfo;
-  timeline: Timeline;
-  status: 'draft' | 'posted' | 'active' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
-  posterId: {
-    _id: string;
-    name: string;
-    email: string;
-    phone: string;
-  };
-  assignedTo?: {
-    _id: string;
-    name: string;
-    email: string;
-    phone: string;
-  };
-  applications: Application[];
-  views: number;
-  applicationsCount: number;
-  completionDate?: string;
-  images?: string[];
-  documents?: string[];
-  contactPreference: 'phone' | 'message' | 'both';
-  isRecurring: boolean;
-  recurringPattern?: 'daily' | 'weekly' | 'monthly';
-  safetyRequirements?: string[];
-  qualityStandards?: string[];
-  postedAt: string;
-  expiresAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateGigData {
-  title: string;
-  description: string;
-  category: string;
-  subCategory?: string;
-  urgency?: 'low' | 'medium' | 'high' | 'urgent';
-  location: GigLocation;
-  isRemote?: boolean;
-  allowsRemote?: boolean;
-  serviceRadius?: number;
-  skills: RequiredSkill[];
-  experienceLevel?: 'entry' | 'intermediate' | 'experienced' | 'expert';
-  toolsRequired?: string[];
-  materialsProvided?: boolean;
-  payment: PaymentInfo;
-  timeline: Timeline;
-  images?: string[];
-  documents?: string[];
-  contactPreference?: 'phone' | 'message' | 'both';
-  isRecurring?: boolean;
-  recurringPattern?: 'daily' | 'weekly' | 'monthly';
-  safetyRequirements?: string[];
-  qualityStandards?: string[];
-}
-
-export interface GetGigsParams {
-  page?: number;
-  limit?: number;
-  category?: string;
-  skills?: string | string[];
-  minRate?: number;
-  maxRate?: number;
-  urgency?: 'low' | 'medium' | 'high' | 'urgent';
-  paymentType?: 'hourly' | 'fixed' | 'daily' | 'weekly';
-  search?: string;
-  lat?: number;
-  lng?: number;
-  radius?: number;
-}
-
-export interface GetGigsResponse {
-  gigs: Gig[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
-}
-
-export interface ApplyToGigData {
-  message?: string;
-  proposedRate?: number;
-  portfolioLinks?: string[];
-  estimatedDuration?: number;
-  availability?: string;
-}
-
-// Gig Service
 export class GigService {
   // Get all gigs with filters
   static async getGigs(params: GetGigsParams = {}): Promise<GetGigsResponse> {
@@ -179,8 +47,6 @@ export class GigService {
       () => api.get(`/gigs?${queryParams.toString()}`)
     );
   }
-
-
 
   // Get gig by ID
   static async getGigById(id: string): Promise<{ gig: Gig }> {
@@ -205,8 +71,21 @@ export class GigService {
 
   // Delete a gig
   static async deleteGig(id: string): Promise<void> {
-    await apiCall<void>(
+    return await apiCall<void>(
       () => api.delete(`/gigs/${id}`)
+    );
+  }
+
+  // Search gigs
+  static async searchGigs(query: string, lat?: number, lng?: number): Promise<GetGigsResponse> {
+    const params = new URLSearchParams({ search: query });
+    if (lat !== undefined && lng !== undefined) {
+      params.append('lat', lat.toString());
+      params.append('lng', lng.toString());
+    }
+
+    return await apiCall<GetGigsResponse>(
+      () => api.get(`/gigs/search?${params.toString()}`)
     );
   }
 
@@ -240,7 +119,7 @@ export class GigService {
   }
 
   // Get user's applications
-  static async getUserApplications(params: { page?: number; limit?: number; status?: string } = {}): Promise<{ applications: any[] }> {
+  static async getUserApplications(params: { page?: number; limit?: number; status?: string } = {}): Promise<{ success: boolean; data?: { applications: any[] }; message?: string }> {
     const queryParams = new URLSearchParams();
     
     Object.entries(params).forEach(([key, value]) => {
@@ -249,51 +128,35 @@ export class GigService {
       }
     });
 
-    return await apiCall<{ applications: any[] }>(
-      () => api.get(`/gigs/user/applications?${queryParams.toString()}`)
+    try {
+      const response = await api.get(`/gigs/user/applications?${queryParams.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      const apiError = handleApiError(error);
+      throw new Error(apiError.message);
+    }
+  }
+
+  // Get applications for a specific gig (for gig posters)
+  static async getGigApplications(gigId: string, params: { page?: number; limit?: number; status?: string } = {}): Promise<{ applications: any[]; gig: any; pagination: any }> {
+    const queryParams = new URLSearchParams();
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    return await apiCall<{ applications: any[]; gig: any; pagination: any }>(
+      () => api.get(`/applications/gig/${gigId}?${queryParams.toString()}`)
     );
   }
 
-  // Search gigs by text
-  static async searchGigs(searchTerm: string, lat?: number, lng?: number, radius: number = 15): Promise<{ gigs: Gig[] }> {
-    const params: GetGigsParams = {
-      search: searchTerm,
-      radius
-    };
-
-    if (lat && lng) {
-      params.lat = lat;
-      params.lng = lng;
-    }
-
-    const response = await this.getGigs(params);
-    return { gigs: response.gigs };
-  }
-
-  // Get gigs by category
-  static async getGigsByCategory(category: string, lat?: number, lng?: number): Promise<{ gigs: Gig[] }> {
-    const params: GetGigsParams = { category };
-
-    if (lat && lng) {
-      params.lat = lat;
-      params.lng = lng;
-    }
-
-    const response = await this.getGigs(params);
-    return { gigs: response.gigs };
-  }
-
-  // Get gigs by skills
-  static async getGigsBySkills(skills: string[], lat?: number, lng?: number): Promise<{ gigs: Gig[] }> {
-    const params: GetGigsParams = { skills };
-
-    if (lat && lng) {
-      params.lat = lat;
-      params.lng = lng;
-    }
-
-    const response = await this.getGigs(params);
-    return { gigs: response.gigs };
+  // Reject an application
+  static async rejectApplication(gigId: string, applicationId: string): Promise<{ gig: Gig }> {
+    return await apiCall<{ gig: Gig }>(
+      () => api.put(`/gigs/${gigId}/applications/${applicationId}/reject`)
+    );
   }
 }
 

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "quicklister-backend",
   "version": "1.0.0",
   "description": "Backend server for QuickLister application",
@@ -18,7 +19,7 @@
     "nodejs",
     "express"
   ],
-  "author": "MJob Team",
+  "author": "QuickLister Team",
   "license": "MIT",
   "dependencies": {
     "@types/compression": "^1.8.0",

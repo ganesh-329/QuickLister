@@ -7,6 +7,8 @@ import AuthSelectionPage from './components/Auth/AuthSelectionPage';
 import Footer from './components/Layout/Footer';
 import LogoHeader from './components/Layout/LogoHeader';
 import { MyGigs } from './components/Dashboard/MyGigs';
+import { Applications } from './components/Dashboard/Applications';
+import Dashboard from './components/Dashboard/Dashboard';
 import Profile from './components/Profile/Profile';
 import AuthenticatedLayout from './components/Layout/AuthenticatedLayout';
 import { AuthProvider, useAuth, LoginForm, SignupForm } from './components/Auth';
@@ -68,7 +70,7 @@ function MapRouteWithSharedState() {
   // Shared state that will be passed to both AuthenticatedLayout and MapView
   const [activeFilters, setActiveFilters] = React.useState<string[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [selectedLocation, setSelectedLocation] = React.useState<any>(null);
+  const [selectedLocation] = React.useState<any>(null);
   const [isMapsApiLoaded, setIsMapsApiLoaded] = React.useState(false);
 
   return (
@@ -77,8 +79,6 @@ function MapRouteWithSharedState() {
       setSearchQuery={setSearchQuery}
       activeFilters={activeFilters}
       setActiveFilters={setActiveFilters}
-      selectedLocation={selectedLocation}
-      setSelectedLocation={setSelectedLocation}
       isMapsApiLoaded={isMapsApiLoaded}
     >
       <MapView 
@@ -148,6 +148,18 @@ function App() {
           element={
             isAuthenticated ? (
               <AuthenticatedLayout>
+                <Dashboard />
+              </AuthenticatedLayout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
+        />
+        <Route 
+          path="/my-gigs" 
+          element={
+            isAuthenticated ? (
+              <AuthenticatedLayout>
                 <MyGigs />
               </AuthenticatedLayout>
             ) : (
@@ -156,11 +168,11 @@ function App() {
           } 
         />
         <Route 
-          path="/dashboard/*" 
+          path="/applications" 
           element={
             isAuthenticated ? (
               <AuthenticatedLayout>
-                <MyGigs />
+                <Applications />
               </AuthenticatedLayout>
             ) : (
               <Navigate to="/login" />

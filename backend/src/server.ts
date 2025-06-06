@@ -119,6 +119,7 @@ app.use('/api/gigs', gigRoutes);
 // Application routes
 app.use('/api/applications', applicationRoutes);
 
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({

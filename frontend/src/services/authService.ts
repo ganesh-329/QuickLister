@@ -1,32 +1,15 @@
 import api, { apiCall, setAuthToken } from './api';
+import {
+  User,
+  LoginData,
+  RegisterData,
+  AuthResponse
+} from '../../../shared/types';
 
-// Types
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  createdAt: string;
-  updatedAt?: string;
-}
+// Re-export types for backward compatibility
+export type { User, LoginData, RegisterData, AuthResponse };
 
-export interface LoginData {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  name: string;
-  email: string;
-  phone: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
-}
+// All interfaces are now imported from shared types
 
 // Authentication Service
 export class AuthService {
@@ -67,20 +50,21 @@ export class AuthService {
     );
   }
 
-  // Refresh token
-  static async refreshToken(): Promise<{ accessToken: string; refreshToken: string }> {
+  // Refresh access token
+  static async refreshToken(): Promise<AuthResponse> {
     const refreshToken = localStorage.getItem('refresh_token');
-    
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
 
-    const response = await apiCall<{ accessToken: string; refreshToken: string }>(
+    const response = await apiCall<AuthResponse>(
       () => api.post('/auth/refresh', { refreshToken })
     );
     
-    // Update tokens
+    // Update auth token
     setAuthToken(response.accessToken);
+    
+    // Update refresh token
     localStorage.setItem('refresh_token', response.refreshToken);
     
     return response;
@@ -88,32 +72,40 @@ export class AuthService {
 
   // Logout user
   static async logout(): Promise<void> {
+    const refreshToken = localStorage.getItem('refresh_token');
+    
     try {
-      await api.post('/auth/logout');
+      if (refreshToken) {
+        await apiCall<void>(
+          () => api.post('/auth/logout', { refreshToken })
+        );
+      }
     } catch (error) {
-      console.warn('Logout API call failed, but continuing with local cleanup');
+      console.warn('Logout error:', error);
     } finally {
-      // Clear tokens regardless of API call success
-      setAuthToken(null);
+      // Clear local storage regardless of API call success
       localStorage.removeItem('refresh_token');
+      setAuthToken(null);
     }
-  }
-
-  // Check if user is authenticated
-  static isAuthenticated(): boolean {
-    const token = localStorage.getItem('auth_token');
-    return !!token;
   }
 
   // Get stored token
   static getToken(): string | null {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem('access_token');
   }
 
-  // Clear all auth data
-  static clearAuthData(): void {
-    setAuthToken(null);
-    localStorage.removeItem('refresh_token');
+  // Check if user is authenticated
+  static isAuthenticated(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      // Simple JWT expiry check (assuming standard JWT structure)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
   }
 }
 

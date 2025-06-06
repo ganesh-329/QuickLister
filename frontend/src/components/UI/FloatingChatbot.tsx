@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { MessageCircleIcon, XIcon, SendIcon } from 'lucide-react';
 const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,7 +33,7 @@ const FloatingChatbot = () => {
   return <div className="fixed bottom-6 right-6 z-[1002]">
       {isOpen ? <div className="bg-white rounded-lg shadow-xl w-80 h-96 flex flex-col overflow-hidden">
           <div className="bg-blue-600 text-white p-3 flex justify-between items-center">
-            <h3 className="font-medium">GigMapper Assistant</h3>
+            <h3 className="font-medium">QuickLister Assistant</h3>
             <button onClick={toggleChatbot}>
               <XIcon size={20} />
             </button>

@@ -20,13 +20,12 @@ QuickLister is a modern web application for local micro-jobs, built with React, 
 - Tailwind CSS
 - React Router
 - Google Maps API
-- Socket.io Client
+
 
 ### Backend
 - Node.js
 - Express
 - MongoDB
-- Socket.io
 - JWT Authentication
 
 ## 📋 Prerequisites

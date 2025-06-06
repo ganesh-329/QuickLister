@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { config } from './env';
+import { config } from './env.js';
 
 class Database {
   private static instance: Database;
@@ -21,14 +21,11 @@ class Database {
     }
 
     try {
-      const mongoUri = config.NODE_ENV === 'test' 
-        ? config.MONGODB_TEST_URI || config.MONGODB_URI
-        : config.MONGODB_URI;
+      const mongoUri = config.MONGODB_URI;
 
       await mongoose.connect(mongoUri, {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
         bufferCommands: false,
       });
 

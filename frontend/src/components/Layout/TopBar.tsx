@@ -94,6 +94,7 @@ const TopBar: React.FC<TopBarProps> = ({
               </svg>
             </button>
 
+
             {/* Auth buttons or user menu */}
             {isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
@@ -125,7 +126,7 @@ const TopBar: React.FC<TopBarProps> = ({
                       onClick={onLogout}
                       className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
                     >
-                      Sign out
+                      Log out
                     </button>
                   </div>
                 )}

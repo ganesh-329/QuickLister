@@ -1,5 +1,6 @@
 {
-  "name": "mjob-platform",
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "quicklister",
   "version": "1.0.0",
   "private": true,
   "scripts": {

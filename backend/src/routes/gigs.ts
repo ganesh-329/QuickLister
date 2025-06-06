@@ -8,6 +8,7 @@ import {
   deleteGig,
   applyToGig,
   acceptApplication,
+  rejectApplication,
   getUserPostedGigs,
   getUserApplications
 } from '../controllers/gigController.js';
@@ -28,6 +29,7 @@ router.delete('/:id', authenticate, deleteGig);                      // DELETE /
 // Application routes
 router.post('/:id/apply', authenticate, applyToGig);                 // POST /api/gigs/:id/apply - Apply to a gig
 router.put('/:gigId/applications/:applicationId/accept', authenticate, acceptApplication); // PUT /api/gigs/:gigId/applications/:applicationId/accept - Accept application
+router.put('/:gigId/applications/:applicationId/reject', authenticate, rejectApplication); // PUT /api/gigs/:gigId/applications/:applicationId/reject - Reject application
 
 // User-specific routes
 router.get('/user/posted', authenticate, getUserPostedGigs);         // GET /api/gigs/user/posted - Get user's posted gigs

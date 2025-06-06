@@ -1,107 +1,24 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
+import { 
+  IGigData, 
+  IGigLocationData, 
+  IRequiredSkillData, 
+  IPaymentInfoData, 
+  ITimelineData, 
+  IApplicationData 
+} from '../../../shared/types/index.js';
 
-// Define interfaces for type safety
-export interface IGigLocation {
-  type: 'Point';
-  coordinates: [number, number]; // [longitude, latitude]
-  address: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  pincode?: string;
-  landmark?: string;
+// Backend Gig interface that extends the shared data interface with Document
+export interface IGig extends Omit<IGigData, '_id'>, Document {
+  _id: mongoose.Types.ObjectId;
 }
+export interface IGigLocation extends IGigLocationData {}
+export interface IRequiredSkill extends IRequiredSkillData {}
+export interface IPaymentInfo extends IPaymentInfoData {}
+export interface ITimeline extends ITimelineData {}
+export interface IApplication extends IApplicationData {}
 
-export interface IRequiredSkill {
-  name: string;
-  category: string;
-  proficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
-  isRequired: boolean;
-}
-
-export interface IPaymentInfo {
-  rate: number;
-  currency: string;
-  paymentType: 'hourly' | 'fixed' | 'daily' | 'weekly';
-  totalBudget?: number;
-  advancePayment?: number;
-  paymentMethod: 'cash' | 'upi' | 'bank_transfer' | 'razorpay';
-}
-
-export interface ITimeline {
-  startDate?: Date;
-  endDate?: Date;
-  duration?: number; // in hours
-  deadline?: Date;
-  isFlexible: boolean;
-  preferredTime?: 'morning' | 'afternoon' | 'evening' | 'night' | 'anytime';
-}
-
-export interface IApplication {
-  applicantId: Types.ObjectId;
-  appliedAt: Date;
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
-  proposedRate?: number;
-  message?: string;
-  portfolioLinks?: string[];
-  estimatedDuration?: number;
-  availability?: Date;
-}
-
-export interface IGig extends Document {
-  // Basic Information
-  title: string;
-  description: string;
-  category: string;
-  subCategory?: string;
-  urgency: 'low' | 'medium' | 'high' | 'urgent';
-  
-  // Location Information
-  location: IGigLocation;
-  isRemote: boolean;
-  allowsRemote: boolean;
-  serviceRadius?: number; // in kilometers
-  
-  // Job Details
-  skills: IRequiredSkill[];
-  experienceLevel: 'entry' | 'intermediate' | 'experienced' | 'expert';
-  toolsRequired?: string[];
-  materialsProvided: boolean;
-  
-  // Payment Information
-  payment: IPaymentInfo;
-  
-  // Timeline
-  timeline: ITimeline;
-  
-  // Status and Management
-  status: 'draft' | 'posted' | 'active' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
-  posterId: Types.ObjectId;
-  assignedTo?: Types.ObjectId;
-  applications: IApplication[];
-  
-  // Engagement Metrics
-  views: number;
-  applicationsCount: number;
-  completionDate?: Date;
-  
-  // Additional Information
-  images?: string[];
-  documents?: string[];
-  contactPreference: 'phone' | 'message' | 'both';
-  isRecurring: boolean;
-  recurringPattern?: 'daily' | 'weekly' | 'monthly';
-  
-  // Quality and Safety
-  safetyRequirements?: string[];
-  qualityStandards?: string[];
-  
-  // Timestamps
-  postedAt: Date;
-  expiresAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// All interfaces are now imported from shared types
 
 // Required Skills Schema
 const RequiredSkillSchema = new Schema<IRequiredSkill>({
@@ -184,6 +101,18 @@ const ApplicationSchema = new Schema<IApplication>({
     enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
     default: 'pending'
   },
+  statusChangedAt: { type: Date, default: Date.now },
+  rejectionReason: { type: String, trim: true, maxlength: 500 },
+  statusHistory: [{
+    status: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', 'withdrawn'],
+      required: true
+    },
+    changedAt: { type: Date, default: Date.now },
+    changedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    reason: { type: String, trim: true, maxlength: 500 }
+  }],
   proposedRate: { type: Number, min: 0 },
   message: { type: String, trim: true, maxlength: 1000 },
   portfolioLinks: [{ type: String, trim: true }],
