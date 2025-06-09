@@ -23,7 +23,6 @@ const FloatingChatbot: React.FC = () => {
     connectSocket,
     setCurrentChat,
     clearError,
-    addMessage,
   } = useChatStore();
 
   // Initialize socket connection when component mounts and user is available

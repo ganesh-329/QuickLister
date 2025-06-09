@@ -70,19 +70,35 @@ export function createSocketService({ httpServer }: ServerOptions) {
         
         if (chat?.aiEnabled) {
           console.log('🧠 AI is enabled, getting conversation context...');
-          // Get last N messages for context
+          // Get recent messages for context with optimization
           const messages = await Message.find({ chat: chatId })
-            .sort({ createdAt: 1 })
-            .limit(20);
+            .sort({ createdAt: -1 })
+            .limit(12)  // Reduced from 20 to 12
+            .lean();  // Use lean() for better performance
           
           console.log(`📚 Found ${messages.length} messages for context`);
           
-          const context = messages.map((m: any) => ({
-            role: m.senderType === 'user' ? 'user' as 'user' : 'assistant' as 'assistant',
-            content: m.content as string,
-          }));
+          // Reverse to get chronological order
+          messages.reverse();
+          
+          // Optimize context by filtering and truncating
+          const context = messages
+            .filter((m: any) => m.senderType === 'user' || m.senderType === 'ai') // Only user and AI messages
+            .map((m: any) => ({
+              role: m.senderType === 'user' ? 'user' as 'user' : 'assistant' as 'assistant',
+              content: (m.content as string).length > 500 
+                ? (m.content as string).substring(0, 500) + '...' 
+                : m.content as string, // Truncate long messages
+            }))
+            .slice(-8); // Keep only last 8 relevant messages (4 exchanges)
 
-          console.log('🎯 Prepared context for AI:', context.length, 'messages');
+          console.log('🎯 Prepared optimized context for AI:', context.length, 'messages');
+          console.log('📊 Context stats:', {
+            totalMessages: messages.length,
+            filteredMessages: context.length,
+            avgMessageLength: Math.round(context.reduce((sum, msg) => sum + msg.content.length, 0) / context.length),
+            totalContextSize: context.reduce((sum, msg) => sum + msg.content.length, 0)
+          });
 
           // Get AI response
           try {
