@@ -1,26 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeftIcon, UserIcon, MessageCircleIcon, CheckCircleIcon, XCircleIcon, ClockIcon, MapPinIcon, DollarSignIcon } from 'lucide-react';
+import { ArrowLeftIcon, UserIcon, MessageCircleIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from 'lucide-react';
 import GigService from '../../services/gigService';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
 interface GigApplicationsProps {
   gigId: string;
   onBack: () => void;
-}
-
-interface ApplicationData {
-  _id: string;
-  applicantId: {
-    _id: string;
-    name: string;
-    email: string;
-    phone?: string;
-    avatar?: string;
-  };
-  message: string;
-  proposedRate?: number;
-  status: 'pending' | 'accepted' | 'rejected';
-  appliedAt: string;
 }
 
 const statusConfig = {
@@ -48,8 +33,7 @@ const statusConfig = {
 };
 
 export const GigApplications: React.FC<GigApplicationsProps> = ({ gigId, onBack }) => {
-  const [applications, setApplications] = useState<ApplicationData[]>([]);
-  const [gig, setGig] = useState<any>(null);
+  const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingApplicationId, setProcessingApplicationId] = useState<string | null>(null);
@@ -63,7 +47,6 @@ export const GigApplications: React.FC<GigApplicationsProps> = ({ gigId, onBack 
       setLoading(true);
       const response = await GigService.getGigApplications(gigId);
       setApplications(response.applications);
-      setGig(response.gig);
     } catch (err) {
       setError('Failed to load applications');
       console.error('Error fetching gig applications:', err);
@@ -155,7 +138,7 @@ export const GigApplications: React.FC<GigApplicationsProps> = ({ gigId, onBack 
           ) : (
             <div className="space-y-4">
               {applications.map((application) => {
-                const config = statusConfig[application.status] || statusConfig.pending;
+                const config = statusConfig[application.status as keyof typeof statusConfig] || statusConfig.pending;
                 const StatusIcon = config.icon;
                 const isProcessing = processingApplicationId === application._id;
 

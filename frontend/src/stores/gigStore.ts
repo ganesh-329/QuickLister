@@ -278,7 +278,7 @@ export const useGigStore = create<GigState>()(
         const response = await GigService.getUserApplications();
         
         set({
-          userApplications: response.applications,
+          userApplications: response.data?.applications || [],
           loading: false,
         });
       } catch (error: any) {

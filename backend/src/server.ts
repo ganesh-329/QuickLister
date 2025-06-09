@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -6,9 +7,16 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { config, isDevelopment } from './config/env.js';
 import { database } from './config/database.js';
+import { createSocketService } from './services/socketService.js';
 
 // Create Express application
 const app = express();
+
+// Create HTTP server
+const httpServer = createServer(app);
+
+// Initialize Socket.io
+const io = createSocketService({ httpServer });
 
 // Security middleware
 app.use(helmet({
@@ -96,6 +104,10 @@ import authRoutes from './routes/auth.js';
 import gigRoutes from './routes/gigs.js';
 import applicationRoutes from './routes/applications.js';
 import profileRoutes from './routes/profile.js';
+import chatRoutes from './routes/chat.js';
+
+// Import services for health checks
+import { ollamaService } from './services/ollamaService.js';
 
 // API routes
 app.get('/api', (req, res) => {
@@ -119,6 +131,59 @@ app.use('/api/gigs', gigRoutes);
 // Application routes
 app.use('/api/applications', applicationRoutes);
 
+// Chat routes
+app.use('/api/chat', chatRoutes);
+
+// Ollama health check endpoint
+app.get('/api/ollama/health', async (req, res) => {
+  try {
+    console.log('🔍 Checking Ollama health...');
+    const isAvailable = await ollamaService.isAvailable();
+    
+    if (isAvailable) {
+      // Try a simple chat request to test full functionality
+      try {
+        const testResponse = await ollamaService.chat([
+          { role: 'user', content: 'Hello, respond with just "OK"' }
+        ]);
+        
+        res.status(200).json({
+          status: 'healthy',
+          message: 'Ollama service is working properly',
+          baseUrl: process.env.OLLAMA_BASE_URL,
+          model: process.env.OLLAMA_MODEL,
+          testResponse: testResponse?.substring(0, 100), // First 100 chars
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error) {
+        res.status(503).json({
+          status: 'degraded',
+          message: 'Ollama is reachable but chat functionality failed',
+          baseUrl: process.env.OLLAMA_BASE_URL,
+          model: process.env.OLLAMA_MODEL,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } else {
+      res.status(503).json({
+        status: 'unhealthy',
+        message: 'Cannot reach Ollama service',
+        baseUrl: process.env.OLLAMA_BASE_URL,
+        model: process.env.OLLAMA_MODEL,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (error) {
+    console.error('❌ Ollama health check error:', error);
+    res.status(503).json({
+      status: 'error',
+      message: 'Health check failed',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -158,11 +223,12 @@ async function startServer() {
     }
 
     // Start HTTP server
-    const server = app.listen(config.PORT, () => {
+    const server = httpServer.listen(config.PORT, () => {
       console.log(`🚀 Server running on port ${config.PORT}`);
       console.log(`📍 Environment: ${config.NODE_ENV}`);
       console.log(`🌐 API URL: http://localhost:${config.PORT}/api`);
       console.log(`❤️ Health check: http://localhost:${config.PORT}/health`);
+      console.log(`💬 Socket.io initialized for real-time chat`);
     });
 
     // Graceful shutdown
@@ -205,4 +271,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   startServer();
 }
 
-export { app, startServer };
+export { app, startServer, httpServer, io };

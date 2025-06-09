@@ -22,23 +22,11 @@ const envSchema = z.object({
   // Google Maps API
   GOOGLE_MAPS_API_KEY: z.string().optional(),
 
-  // DigiLocker Configuration
-  DIGILOCKER_CLIENT_ID: z.string().optional(),
-  DIGILOCKER_CLIENT_SECRET: z.string().optional(),
-  DIGILOCKER_REDIRECT_URI: z.string().optional(),
-
-  // Razorpay Configuration
-  RAZORPAY_KEY_ID: z.string().optional(),
-  RAZORPAY_KEY_SECRET: z.string().optional(),
-
-  // Cloudflare Configuration
-  CLOUDFLARE_API_TOKEN: z.string().optional(),
-
-  // Email Configuration
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.string().optional().transform(Number),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
+  //Ollama
+  OLLAMA_BASE_URL: z.string().optional(),
+  OLLAMA_MODEL: z.string().optional(),
+  OLLAMA_TIMEOUT: z.string().optional(),
+  OLLAMA_MAX_TOKENS: z.string().optional(),
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number),

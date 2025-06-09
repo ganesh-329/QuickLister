@@ -1,139 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BriefcaseIcon, 
-  FileTextIcon, 
-  UserIcon, 
-  TrendingUpIcon,
-  CalendarIcon,
-  MapPinIcon,
+import { useNavigate } from 'react-router-dom';
+import {
+  BriefcaseIcon,
+  FileTextIcon,
+  UserIcon,
   DollarSignIcon,
   AlertCircleIcon,
-  CheckCircleIcon
+  TrendingUpIcon,
+  MapPinIcon,
+  CalendarIcon,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import GigService, { Gig } from '../../services/gigService';
+import { useGigStore } from '../../stores/gigStore';
 import LoadingSpinner from '../UI/LoadingSpinner';
-
-interface DashboardStats {
-  totalGigs: number;
-  activeGigs: number;
-  totalApplications: number;
-  pendingApplications: number;
-  totalEarnings: number;
-  thisMonthEarnings: number;
-}
-
-interface RecentActivity {
-  id: string;
-  type: 'gig_posted' | 'application_received' | 'gig_completed' | 'payment_received';
-  title: string;
-  description: string;
-  date: string;
-  amount?: number;
-}
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalGigs: 0,
-    activeGigs: 0,
-    totalApplications: 0,
-    pendingApplications: 0,
-    totalEarnings: 0,
-    thisMonthEarnings: 0
+  const { fetchUserPostedGigs, userPostedGigs } = useGigStore();
+  
+  // State for dashboard data
+  const [stats, setStats] = useState({
+    totalGigs: 3,
+    activeApplications: 2,
+    completedJobs: 5,
+    totalEarnings: 2450,
+    pendingApplications: 1,
+    totalApplications: 0
   });
-  const [recentGigs, setRecentGigs] = useState<Gig[]>([]);
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboardData();
+    loadDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const loadDashboardData = async () => {
     try {
       setLoading(true);
       
-      // Fetch user's posted gigs
-      const gigsResponse = await GigService.getUserPostedGigs({ limit: 5 });
-      setRecentGigs(gigsResponse.gigs);
-
-      // Calculate stats from gigs
-      const totalGigs = gigsResponse.pagination.total;
-      const activeGigs = gigsResponse.gigs.filter(gig => gig.status === 'active').length;
+      // Fetch user's gigs
+      await fetchUserPostedGigs();
       
-      // Calculate total applications across all gigs
-      const totalApplications = gigsResponse.gigs.reduce((sum, gig) => sum + (gig.applicationsCount || 0), 0);
-      const pendingApplications = gigsResponse.gigs.reduce((sum, gig) => 
-        sum + gig.applications.filter(app => app.status === 'pending').length, 0
-      );
-
-      // Mock earnings calculation (in real app, this would come from backend)
-      const totalEarnings = gigsResponse.gigs
-        .filter(gig => gig.status === 'completed')
-        .reduce((sum, gig) => sum + gig.payment.rate, 0);
-
+      // Mock data for now - in real app, this would come from API
       setStats({
-        totalGigs,
-        activeGigs,
-        totalApplications,
-        pendingApplications,
-        totalEarnings,
-        thisMonthEarnings: totalEarnings * 0.3 // Mock this month's earnings
+        totalGigs: userPostedGigs.length,
+        activeApplications: 2,
+        completedJobs: 5,
+        totalEarnings: 2450,
+        pendingApplications: 1,
+        totalApplications: 3
       });
-
-      // Mock recent activity
-      setRecentActivity([
-        {
-          id: '1',
-          type: 'application_received',
-          title: 'New Application',
-          description: 'Someone applied to your Web Developer gig',
-          date: new Date().toISOString()
-        },
-        {
-          id: '2',
-          type: 'gig_posted',
-          title: 'Gig Posted',
-          description: 'Your Graphic Designer gig is now live',
-          date: new Date(Date.now() - 86400000).toISOString()
-        }
-      ]);
-
+      
     } catch (err) {
       setError('Failed to load dashboard data');
-      console.error('Dashboard error:', err);
+      console.error('Dashboard loading error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getActivityIcon = (type: RecentActivity['type']) => {
-    switch (type) {
-      case 'gig_posted':
-        return <BriefcaseIcon className="w-4 h-4 text-blue-600" />;
-      case 'application_received':
-        return <FileTextIcon className="w-4 h-4 text-green-600" />;
-      case 'gig_completed':
-        return <CheckCircleIcon className="w-4 h-4 text-green-600" />;
-      case 'payment_received':
-        return <DollarSignIcon className="w-4 h-4 text-green-600" />;
-      default:
-        return <AlertCircleIcon className="w-4 h-4 text-gray-600" />;
-    }
-  };
-
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return 'Today';
-    if (diffDays === 2) return 'Yesterday';
-    if (diffDays <= 7) return `${diffDays - 1} days ago`;
-    return date.toLocaleDateString();
+    return new Date(dateString).toLocaleDateString();
   };
 
   const getStatusColor = (status: string) => {
@@ -148,6 +75,9 @@ const Dashboard: React.FC = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Use userPostedGigs as recent gigs
+  const recentGigs = userPostedGigs.slice(0, 3); // Show only first 3 gigs
 
   if (loading) {
     return (
@@ -194,7 +124,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600">Active Gigs</p>
-                  <p className="text-xl font-bold text-gray-900">{stats.activeGigs}</p>
+                  <p className="text-xl font-bold text-gray-900">{stats.activeApplications}</p>
                 </div>
               </div>
             </div>
