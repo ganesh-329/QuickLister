@@ -25,7 +25,7 @@ export interface PaymentInfo {
   paymentType: 'hourly' | 'fixed' | 'daily' | 'weekly';
   totalBudget?: number;
   advancePayment?: number;
-  paymentMethod: 'cash' | 'upi' | 'bank_transfer' | 'razorpay';
+  paymentMethod: 'cash' | 'bank_transfer';
 }
 
 // Timeline interface

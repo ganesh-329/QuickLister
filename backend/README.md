@@ -38,15 +38,6 @@ JWT_REFRESH_EXPIRES_IN=7d
 # Google Maps API
 GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 
-# DigiLocker Configuration
-DIGILOCKER_CLIENT_ID=your-digilocker-client-id
-DIGILOCKER_CLIENT_SECRET=your-digilocker-client-secret
-DIGILOCKER_REDIRECT_URI=http://localhost:5173/auth/digilocker/callback
-
-# Razorpay Configuration
-RAZORPAY_KEY_ID=your-razorpay-key-id
-RAZORPAY_KEY_SECRET=your-razorpay-key-secret
-
 # Email Configuration
 SMTP_HOST=your-smtp-host
 SMTP_PORT=587
@@ -207,7 +198,7 @@ The API returns consistent error responses:
 1. **Frontend Integration** - Connect React components to API
 2. **Gig Management** - CRUD operations for gigs
 3. **Search & Discovery** - Geospatial search implementation
-4. **Payment Integration** - Razorpay payment processing
+4. **Payment Integration** - Secure payment processing
 
 ## 📝 License
 
@@ -242,15 +233,6 @@ JWT_REFRESH_EXPIRES_IN=7d
 # Google Maps API
 GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 
-# DigiLocker Configuration
-DIGILOCKER_CLIENT_ID=your-digilocker-client-id
-DIGILOCKER_CLIENT_SECRET=your-digilocker-client-secret
-DIGILOCKER_REDIRECT_URI=http://localhost:5173/auth/digilocker/callback
-
-# Razorpay Configuration
-RAZORPAY_KEY_ID=your-razorpay-key-id
-RAZORPAY_KEY_SECRET=your-razorpay-key-secret
-
 # Email Configuration
 SMTP_HOST=your-smtp-host
 SMTP_PORT=587
@@ -265,13 +247,7 @@ RATE_LIMIT_MAX_REQUESTS=100
 CORS_ORIGIN=http://localhost:5173
 ```
 
-3. Configure DigiLocker:
-   - Register as a DigiLocker partner at https://digitallocker.gov.in/
-   - Get your client ID and secret
-   - Set up your redirect URI in the DigiLocker dashboard
-   - Add the credentials to your `.env` file
-
-4. Start the development server:
+3. Start the development server:
 ```bash
 npm run dev
 ```
@@ -301,16 +277,6 @@ Content-Type: application/json
   "email": "user@example.com",
   "password": "securepassword"
 }
-```
-
-#### DigiLocker Authentication
-```http
-GET /api/auth/digilocker/authorize
-```
-
-#### DigiLocker Callback
-```http
-GET /api/auth/digilocker/callback
 ```
 
 ### User Endpoints

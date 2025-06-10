@@ -2,12 +2,12 @@
 
 ## 1. Executive Summary
 
-A location-centric microjob platform that connects service providers with job posters in their vicinity. The platform leverages interactive maps, AI-powered matching, and India-specific features (Aadhar verification, UPI payments) to create a secure, efficient marketplace for short-term work opportunities.
+A location-centric microjob platform that connects service providers with job posters in their vicinity. The platform leverages interactive maps and AI-powered matching to create a secure, efficient marketplace for short-term work opportunities.
 
 ## 2. Core Value Proposition
 
 - **Hyperlocal Job Discovery**: Find gigs within walking/riding distance
-- **Trust & Safety**: Aadhar-verified users and secure transactions
+- **Trust & Safety**: Verified users and secure transactions
 - **AI-Powered Matching**: Smart recommendations for both job seekers and posters
 - **Real-Time Tracking**: Live location updates during job execution
 
@@ -41,9 +41,9 @@ A location-centric microjob platform that connects service providers with job po
 
 ### 4.2 User Authentication & Verification
 
-- Aadhar-based authentication via DigiLocker
+- Phone-based authentication with OTP verification
 - Progressive profile completion indicators
-- Only those who verified through can post/apply for jobs
+- Identity verification for enhanced trust
 
 ### 4.3 Job Discovery & Management
 
@@ -57,20 +57,16 @@ A location-centric microjob platform that connects service providers with job po
 
 ### 4.5 Payments & Financial Features
 
-- UPI integration for secure transactions between users who are posting and applying - we are only miiddleman 
-
+- Secure payment processing between users
 - Earnings dashboard with graphical visualization
 - Instant payout requests
 - Transaction history and receipt generation
 
 ### 4.6 AI Integration
 
-
 - Fraudulent job detection
 - Price suggestion based on market rates
 - Chatbot assistant for platform navigation
-
-
 
 ### 4.7 Community & Engagement
 
@@ -95,12 +91,10 @@ A location-centric microjob platform that connects service providers with job po
 - Custom markers with job preview data
 - Map clustering for dense areas
 
-
 ### 5.2 Authentication & Security
 
-- DigiLocker API integration for Aadhar verification
+- Phone-based authentication with SMS OTP
 - Secure token-based authentication
-
 - Data encryption for sensitive information
 - Role-based access control
 - Environment variables for API key storage
@@ -111,11 +105,10 @@ A location-centric microjob platform that connects service providers with job po
 
 ### 5.3 Payment Processing
 
-- UPI payment gateway integration
+- Secure payment gateway integration
 - Escrow mechanism for fund holding
 - Automatic commission calculation
 - Refund processing capabilities
-
 
 ### 5.4 AI Implementation
 
@@ -138,11 +131,11 @@ A location-centric microjob platform that connects service providers with job po
 ### 6.1 User Registration
 
 1. Download app/visit website
-4. Connect Aadhar via DigiLocker
-5. Complete basic profile
-6. Set up UPI for payments
-7. Enable location services
-8. View tutorial overlay
+2. Phone number verification with OTP
+3. Complete basic profile
+4. Set up payment preferences
+5. Enable location services
+6. View tutorial overlay
 
 ### 6.2 Job Discovery
 
@@ -204,8 +197,6 @@ A location-centric microjob platform that connects service providers with job po
 - AI recommendation acceptance rate
 - Support ticket volume and resolution time
 
-
-
 ## 10. Technical Implementation Phases
 
 ### Phase 1: Core Platform
@@ -213,10 +204,10 @@ A location-centric microjob platform that connects service providers with job po
 - Authentication with phone OTP
 - Simple job posting and discovery
 - Basic messaging
-- UPI payment integration
+- Payment integration
 
 ### Phase 2: Enhanced Features
-- Aadhar verification
+- Enhanced identity verification
 - AI recommendations v1
 - Rating and review system
 - Enhanced profiles

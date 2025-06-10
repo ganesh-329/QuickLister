@@ -140,18 +140,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <DollarSignIcon className="w-5 h-5 text-yellow-600" />
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">Total Earnings</p>
-                  <p className="text-xl font-bold text-gray-900">₹{stats.totalEarnings.toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Main Content Grid */}

@@ -45,7 +45,7 @@ const PaymentInfoSchema = new Schema<IPaymentInfo>({
   advancePayment: { type: Number, min: 0, default: 0 },
   paymentMethod: {
     type: String,
-    enum: ['cash', 'upi', 'bank_transfer', 'razorpay'],
+    enum: ['cash', 'bank_transfer'],
     required: true
   }
 });
