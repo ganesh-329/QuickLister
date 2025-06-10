@@ -63,11 +63,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   // Handle API errors
-  const handleError = (error: any) => {
-    const message = error.message || 'An error occurred';
-    setError(message);
-    setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
-  };
+  // const handleError = (error: any) => {
+  //   const message = error.message || 'An error occurred';
+  //   setError(message);
+  //   setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
+  // };
 
   // Login function
   const login = useCallback(async (email: string, password: string) => {
@@ -85,8 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       });
-    } catch (error: any) {
-      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -108,8 +106,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       });
-    } catch (error: any) {
-      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
 
     } catch (error: any) {
-      handleError(error);
       await logout(); // Logout on refresh failure
     }
   }, [logout]);

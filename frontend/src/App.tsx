@@ -73,6 +73,13 @@ function MapRouteWithSharedState() {
   const [selectedLocation] = React.useState<any>(null);
   const [isMapsApiLoaded, setIsMapsApiLoaded] = React.useState(false);
 
+  const handleSearchSubmit = (query: string) => {
+    console.log('Search submitted in MapRoute:', query);
+    setSearchQuery(query);
+    // The MapView component will react to the searchQuery change
+    // and update the displayed gigs accordingly
+  };
+
   return (
     <AuthenticatedLayout
       searchQuery={searchQuery}
@@ -80,6 +87,7 @@ function MapRouteWithSharedState() {
       activeFilters={activeFilters}
       setActiveFilters={setActiveFilters}
       isMapsApiLoaded={isMapsApiLoaded}
+      onSearchSubmit={handleSearchSubmit}
     >
       <MapView 
         searchQuery={searchQuery}

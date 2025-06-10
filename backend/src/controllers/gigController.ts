@@ -199,7 +199,6 @@ export const getGigById = async (req: Request, res: Response): Promise<void> => 
     console.error('Get gig by ID error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to retrieve gig',
       error: config.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }

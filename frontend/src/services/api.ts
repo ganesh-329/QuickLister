@@ -92,7 +92,7 @@ export interface ApiResponse<T = any> {
 
 // Generic API error type
 export interface ApiError {
-  message: string;
+  // message: string;
   status?: number;
   code?: string;
 }
@@ -102,20 +102,19 @@ export const handleApiError = (error: any): ApiError => {
   if (error.response) {
     // Server responded with error status
     return {
-      message: error.response.data?.message || 'An error occurred',
       status: error.response.status,
       code: error.response.data?.code,
     };
   } else if (error.request) {
     // Request was made but no response received
     return {
-      message: 'Network error - Please check your connection',
+    //  message: 'Network error - Please check your connection',
       status: 0,
     };
   } else {
     // Something else happened
     return {
-      message: error.message || 'An unexpected error occurred',
+     // message: error.message || 'An unexpected error occurred',
     };
   }
 };
@@ -134,7 +133,7 @@ export const apiCall = async <T>(
     return response.data.data as T;
   } catch (error) {
     const apiError = handleApiError(error);
-    throw new Error(apiError.message);
+    throw new Error(apiError.code);
   }
 };
 

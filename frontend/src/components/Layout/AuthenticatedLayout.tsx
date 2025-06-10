@@ -14,6 +14,7 @@ interface AuthenticatedLayoutProps {
   activeFilters?: string[];
   setActiveFilters?: (filters: string[]) => void;
   isMapsApiLoaded?: boolean;
+  onSearchSubmit?: (query: string) => void;
 }
 
 function AuthenticatedLayout({ 
@@ -22,7 +23,8 @@ function AuthenticatedLayout({
   setSearchQuery: externalSetSearchQuery,
   activeFilters: externalActiveFilters,
   setActiveFilters: externalSetActiveFilters,
-  isMapsApiLoaded: externalIsMapsApiLoaded
+  isMapsApiLoaded: externalIsMapsApiLoaded,
+  onSearchSubmit: externalOnSearchSubmit
 }: AuthenticatedLayoutProps) {
   // Persist sidebar state across navigation using localStorage
   const [sidebarOpen, setSidebarOpen] = React.useState(() => {
@@ -61,6 +63,20 @@ function AuthenticatedLayout({
     navigate('/');
   };
 
+  const handleSearchSubmit = (query: string) => {
+    // If there's an external search submit handler, use it
+    if (externalOnSearchSubmit) {
+      externalOnSearchSubmit(query);
+    } else {
+      // Default behavior: navigate to main page with search query
+      if (window.location.pathname !== '/main') {
+        navigate('/main');
+      }
+      // The search query will be handled by the SearchBar component
+      console.log('Search submitted:', query);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen w-full bg-gray-100 relative overflow-hidden">
       <TopBar 
@@ -73,6 +89,7 @@ function AuthenticatedLayout({
         isAuthenticated={isAuthenticated}
         onLogout={handleLogout}
         user={user}
+        onSearchSubmit={handleSearchSubmit}
       />
       <div className="flex flex-1 relative min-h-0">
         <LeftSidebar 

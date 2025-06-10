@@ -14,6 +14,7 @@ interface TopBarProps {
   onLoginClick?: () => void;
   onSignupClick?: () => void;
   onLogout: () => void;
+  onSearchSubmit?: (query: string) => void;
 }
 
 const TopBar: React.FC<TopBarProps> = ({
@@ -27,7 +28,8 @@ const TopBar: React.FC<TopBarProps> = ({
   user,
   onLoginClick,
   onSignupClick,
-  onLogout
+  onLogout,
+  onSearchSubmit
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -48,6 +50,11 @@ const TopBar: React.FC<TopBarProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDropdown]);
+
+  const handleSearchSubmit = (query: string) => {
+    setSearchQuery(query);
+    onSearchSubmit?.(query);
+  };
 
   return (
     <div className="bg-white shadow-sm z-10">
@@ -78,6 +85,7 @@ const TopBar: React.FC<TopBarProps> = ({
               onChange={setSearchQuery}
               onLocationSelect={onLocationSelect}
               isMapsApiLoaded={isMapsApiLoaded}
+              onSearchSubmit={handleSearchSubmit}
             />
           </div>
 
