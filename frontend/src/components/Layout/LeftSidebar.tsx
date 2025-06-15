@@ -6,7 +6,6 @@ import {
   FileTextIcon, 
   UserIcon, 
   SearchIcon, 
-  HelpCircleIcon, 
   LogOutIcon 
 } from 'lucide-react';
 
@@ -162,13 +161,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         {isAuthenticated && (
           <div className="border-t border-gray-200 px-4 py-4">
             <nav className="space-y-2">
-              <button
-                onClick={() => handleNavigation('/help')}
-                className="w-full flex items-center px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:translate-x-1"
-              >
-                <HelpCircleIcon size={18} className="mr-3" />
-                Help & Support
-              </button>
               <button
                 onClick={onLogout}
                 className="w-full flex items-center px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:translate-x-1"

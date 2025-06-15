@@ -22,11 +22,8 @@ const envSchema = z.object({
   // Google Maps API
   GOOGLE_MAPS_API_KEY: z.string().optional(),
 
-  //Ollama
-  OLLAMA_BASE_URL: z.string().optional(),
-  OLLAMA_MODEL: z.string().optional(),
-  OLLAMA_TIMEOUT: z.string().optional(),
-  OLLAMA_MAX_TOKENS: z.string().optional(),
+  // Cohere AI Configuration
+  COHERE_API_KEY: z.string().min(1, 'Cohere API key is required for AI chat functionality'),
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number),

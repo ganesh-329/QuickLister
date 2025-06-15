@@ -199,21 +199,6 @@ function App() {
             )
           } 
         />
-        <Route 
-          path="/help" 
-          element={
-            isAuthenticated ? (
-              <AuthenticatedLayout>
-                <div className="p-8">
-                  <h1 className="text-2xl font-bold text-gray-800 mb-4">Help & Support</h1>
-                  <p className="text-gray-600">Coming Soon</p>
-                </div>
-              </AuthenticatedLayout>
-            ) : (
-              <Navigate to="/login" />
-            )
-          } 
-        />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

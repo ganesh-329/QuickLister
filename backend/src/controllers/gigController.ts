@@ -117,11 +117,20 @@ export const getGigs = async (req: Request, res: Response): Promise<void> => {
 
     // Geospatial search if coordinates provided
     if (lat && lng) {
-      const coordinates = [parseFloat(lng as string), parseFloat(lat as string)];
+      const coordinates: [number, number] = [parseFloat(lng as string), parseFloat(lat as string)];
       const radiusInMeters = parseFloat(radius as string) * 1000;
 
+      // Note: MongoDB has limitations combining $text and $near in a single query
+      // We'll need to handle this by either:
+      // 1. Doing geospatial search first, then text filtering
+      // 2. Or removing $text from the query when using $near
+      
+      // Remove $text from query if present, since $near and $text can't be combined
+      const geoQuery = { ...query };
+      delete geoQuery.$text;
+
       gigsQuery = Gig.find({
-        ...query,
+        ...geoQuery,
         'location.coordinates': {
           $near: {
             $geometry: {
@@ -136,11 +145,22 @@ export const getGigs = async (req: Request, res: Response): Promise<void> => {
       gigsQuery = Gig.find(query);
     }
 
-    const gigs = await gigsQuery
+    let gigs = await gigsQuery
       .populate('posterId', 'name email phone')
       .sort({ urgency: -1, postedAt: -1 })
       .skip(skip)
       .limit(limitNum);
+
+    // If we have both search text and coordinates, do client-side text filtering
+    if (search && lat && lng) {
+      const searchLower = (search as string).toLowerCase();
+      gigs = gigs.filter(gig => 
+        gig.title.toLowerCase().includes(searchLower) ||
+        gig.description.toLowerCase().includes(searchLower) ||
+        gig.category.toLowerCase().includes(searchLower) ||
+        gig.skills.some(skill => skill.name.toLowerCase().includes(searchLower))
+      );
+    }
 
     const total = await Gig.countDocuments(query);
 
@@ -166,8 +186,6 @@ export const getGigs = async (req: Request, res: Response): Promise<void> => {
     });
   }
 };
-
-
 
 // Get gig by ID
 export const getGigById = async (req: Request, res: Response): Promise<void> => {
@@ -334,8 +352,6 @@ export const applyToGig = async (req: AuthRequest, res: Response): Promise<void>
       });
       return;
     }
-
-
 
     // Check if user is the gig poster
     if (gig.posterId.toString() === userId) {

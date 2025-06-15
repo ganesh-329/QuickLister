@@ -26,6 +26,7 @@
     "@types/morgan": "^1.9.9",
     "axios": "^1.6.7",
     "bcryptjs": "^2.4.3",
+    "cohere-ai": "^7.17.1",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.4",

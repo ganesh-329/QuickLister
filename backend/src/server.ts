@@ -107,7 +107,7 @@ import profileRoutes from './routes/profile.js';
 import chatRoutes from './routes/chat.js';
 
 // Import services for health checks
-import { ollamaService } from './services/ollamaService.js';
+import { cohereService } from './services/cohereService.js';
 
 // API routes
 app.get('/api', (req, res) => {
@@ -134,51 +134,34 @@ app.use('/api/applications', applicationRoutes);
 // Chat routes
 app.use('/api/chat', chatRoutes);
 
-// Ollama health check endpoint
-app.get('/api/ollama/health', async (req, res) => {
+// Cohere AI health check endpoint
+app.get('/api/ai/health', async (req, res) => {
   try {
-    console.log('🔍 Checking Ollama health...');
-    const isAvailable = await ollamaService.isAvailable();
+    console.log('🔍 Checking Cohere AI health...');
+    const healthCheck = await cohereService.healthCheck();
     
-    if (isAvailable) {
-      // Try a simple chat request to test full functionality
-      try {
-        const testResponse = await ollamaService.chat([
-          { role: 'user', content: 'Hello, respond with just "OK"' }
-        ]);
-        
-        res.status(200).json({
-          status: 'healthy',
-          message: 'Ollama service is working properly',
-          baseUrl: process.env.OLLAMA_BASE_URL,
-          model: process.env.OLLAMA_MODEL,
-          testResponse: testResponse?.substring(0, 100), // First 100 chars
-          timestamp: new Date().toISOString(),
-        });
-      } catch (error) {
-        res.status(503).json({
-          status: 'degraded',
-          message: 'Ollama is reachable but chat functionality failed',
-          baseUrl: process.env.OLLAMA_BASE_URL,
-          model: process.env.OLLAMA_MODEL,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString(),
-        });
-      }
+    if (healthCheck.status === 'healthy') {
+      res.status(200).json({
+        status: 'healthy',
+        message: healthCheck.message,
+        service: 'Cohere AI',
+        model: 'command-r-plus',
+        details: healthCheck.details,
+      });
     } else {
       res.status(503).json({
-        status: 'unhealthy',
-        message: 'Cannot reach Ollama service',
-        baseUrl: process.env.OLLAMA_BASE_URL,
-        model: process.env.OLLAMA_MODEL,
-        timestamp: new Date().toISOString(),
+        status: healthCheck.status,
+        message: healthCheck.message,
+        service: 'Cohere AI',
+        details: healthCheck.details,
       });
     }
   } catch (error) {
-    console.error('❌ Ollama health check error:', error);
+    console.error('❌ Cohere health check error:', error);
     res.status(503).json({
       status: 'error',
-      message: 'Health check failed',
+      message: 'AI health check failed',
+      service: 'Cohere AI',
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
     });

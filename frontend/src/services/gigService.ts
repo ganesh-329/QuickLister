@@ -85,7 +85,7 @@ export class GigService {
     }
 
     return await apiCall<GetGigsResponse>(
-      () => api.get(`/gigs/search?${params.toString()}`)
+      () => api.get(`/gigs?${params.toString()}`)
     );
   }
 

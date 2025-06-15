@@ -64,20 +64,17 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
   // Fetch all gigs globally on mount - only once
   useEffect(() => {
     fetchGigs();
-  }, []); // Remove dependency to prevent infinite loop
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle search query changes
   useEffect(() => {
     if (searchQuery) {
-      const currentLocation = userDefinedLocation || center;
-      if (currentLocation) {
-        searchGigs(searchQuery);
-      }
+      searchGigs(searchQuery);
     } else {
       // When no search query, show all global gigs
       fetchGigs();
     }
-  }, [searchQuery]); // Remove dependencies that cause loops
+  }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize location tracking when component mounts (navigation to Browse Jobs)
   useEffect(() => {
@@ -132,7 +129,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
         }
       );
     }
-  }, [isLoaded, mapRef, setUserLocation, isInitialLocationSet, showUserLocation]);
+  }, [isLoaded, mapRef, isInitialLocationSet, showUserLocation]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Callback for when the map loads
   const onMapLoad = useCallback((map: google.maps.Map) => {
@@ -155,7 +152,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
     setShowUserLocation(false);
     setUserLocation(location);
     fetchGigs({ lat: location.lat, lng: location.lng, radius: 15 });
-  }, [setUserLocation, fetchGigs]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cancel location picking
   const handleLocationPickerCancel = useCallback(() => {
@@ -187,7 +184,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
       }
       setIsSearchOverlayActive(false);
     }
-  }, [mapRef, setUserLocation, fetchGigs]);
+  }, [mapRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update marker clustering when filtered gigs change
   useEffect(() => {
@@ -259,7 +256,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
         mapRef.setZoom(15);
       }
     }
-  }, [selectedLocation, mapRef, setUserLocation, fetchGigs]);
+  }, [selectedLocation, mapRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // State to track search-selected location for red pin
   const [searchSelectedLocation, setSearchSelectedLocation] = useState<google.maps.LatLngLiteral | null>(null);
