@@ -12,8 +12,72 @@ import Dashboard from './components/Dashboard/Dashboard';
 import Profile from './components/Profile/Profile';
 import AuthenticatedLayout from './components/Layout/AuthenticatedLayout';
 import { AuthProvider, useAuth, LoginForm, SignupForm } from './components/Auth';
+import { AdminLogin, AdminLayout } from './components/Admin';
+import AuthService from './services/authService';
 
+// Admin wrapper component
+function AdminWrapper() {
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
+  const [adminLoading, setAdminLoading] = React.useState(false);
+  const [adminError, setAdminError] = React.useState<string | null>(null);
+  const [isCheckingAdmin, setIsCheckingAdmin] = React.useState(true);
 
+  React.useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      setIsCheckingAdmin(true);
+      const isAdmin = await AuthService.isAdmin();
+      setIsAdminAuthenticated(isAdmin);
+    } catch (error) {
+      setIsAdminAuthenticated(false);
+    } finally {
+      setIsCheckingAdmin(false);
+    }
+  };
+
+  const handleAdminLogin = async (email: string, password: string) => {
+    try {
+      setAdminLoading(true);
+      setAdminError(null);
+      await AuthService.adminLogin({ email, password });
+      setIsAdminAuthenticated(true);
+    } catch (error) {
+      setAdminError(error instanceof Error ? error.message : 'Admin login failed');
+      throw error;
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleAdminLogout = async () => {
+    try {
+      await AuthService.logout();
+      setIsAdminAuthenticated(false);
+      setAdminError(null);
+    } catch (error) {
+      console.error('Admin logout error:', error);
+    }
+  };
+
+  if (isCheckingAdmin) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAdminAuthenticated) {
+    return (
+      <AdminLogin
+        onLogin={handleAdminLogin}
+        loading={adminLoading}
+        error={adminError}
+      />
+    );
+  }
+
+  return <AdminLayout onLogout={handleAdminLogout} />;
+}
 
 // Navigation wrapper components with useNavigate hook
 function LandingPageWrapper() {
@@ -39,7 +103,10 @@ function LoginFormWrapper() {
       <LogoHeader />
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
-          <LoginForm onSignupClick={() => navigate('/signup')} />
+          <LoginForm 
+            onSignupClick={() => navigate('/signup')} 
+            onBack={() => navigate('/')}
+          />
         </div>
       </div>
       <Footer />
@@ -57,6 +124,7 @@ function SignupFormWrapper() {
           <SignupForm
             onLoginClick={() => navigate('/login')}
             onSuccess={() => navigate('/main')}
+            onBack={() => navigate('/')}
           />
         </div>
       </div>
@@ -137,6 +205,9 @@ function App() {
           path="/signup"
           element={isAuthenticated ? <Navigate to="/main" /> : <SignupFormWrapper />}
         />
+        
+        {/* Admin routes */}
+        <Route path="/admin/*" element={<AdminWrapper />} />
         
         {/* Map route with shared state management */}
         <Route 

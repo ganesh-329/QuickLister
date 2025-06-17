@@ -7,6 +7,8 @@ export interface BaseUser {
   location?: string;
   bio?: string;
   avatar?: string;
+  role?: 'user' | 'admin';
+  status?: 'active' | 'disabled';
 }
 
 // Backend user interface (will be extended with Document in backend)
@@ -19,6 +21,8 @@ export interface IUserData {
   bio?: string;
   avatar?: string;
   password: string;
+  role: 'user' | 'admin';
+  status: 'active' | 'disabled';
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -62,4 +66,33 @@ export interface AuthResponse {
   user: User;
   accessToken: string;
   refreshToken: string;
+}
+
+// Admin-specific interfaces
+export interface AdminUser extends User {
+  role: 'admin';
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  totalGigs: number;
+  totalApplications: number;
+  recentActivity: RecentActivity[];
+}
+
+export interface RecentActivity {
+  _id: string;
+  type: 'user_registered' | 'gig_posted' | 'application_submitted';
+  description: string;
+  timestamp: string;
+  userId?: string;
+  userName?: string;
+}
+
+export interface AdminUsersResponse {
+  users: User[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 } 

@@ -105,6 +105,8 @@ import gigRoutes from './routes/gigs.js';
 import applicationRoutes from './routes/applications.js';
 import profileRoutes from './routes/profile.js';
 import chatRoutes from './routes/chat.js';
+import dashboardRoutes from './routes/dashboard.js';
+import adminRoutes from './routes/admin.js';
 
 // Import services for health checks
 import { cohereService } from './services/cohereService.js';
@@ -133,6 +135,12 @@ app.use('/api/applications', applicationRoutes);
 
 // Chat routes
 app.use('/api/chat', chatRoutes);
+
+// Dashboard routes
+app.use('/api/dashboard', dashboardRoutes);
+
+// Admin routes
+app.use('/api/admin', adminRoutes);
 
 // Cohere AI health check endpoint
 app.get('/api/ai/health', async (req, res) => {

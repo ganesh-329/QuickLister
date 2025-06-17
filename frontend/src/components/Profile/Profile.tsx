@@ -4,7 +4,7 @@ import { UserIcon, MailIcon, PhoneIcon, MapPinIcon, EditIcon, SaveIcon, XIcon, C
 import ProfileService from '../../services/profileService';
 
 const Profile: React.FC = () => {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

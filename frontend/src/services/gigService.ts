@@ -133,7 +133,7 @@ export class GigService {
       return response.data;
     } catch (error: any) {
       const apiError = handleApiError(error);
-      throw new Error(apiError.message);
+      throw new Error(apiError.code || 'Failed to fetch user applications');
     }
   }
 

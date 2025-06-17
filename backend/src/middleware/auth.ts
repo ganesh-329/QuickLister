@@ -11,6 +11,8 @@ declare global {
         id: string;
         email: string;
         phone: string;
+        role: 'user' | 'admin';
+        status: 'active' | 'disabled';
       };
     }
   }
@@ -65,11 +67,22 @@ export const authenticate = async (
       return;
     }
 
+    // Check if user account is active
+    if (user.status === 'disabled') {
+      res.status(401).json({
+        success: false,
+        message: 'Account has been disabled',
+      });
+      return;
+    }
+
     // Attach user to request
     req.user = {
       id: user._id.toString(),
       email: user.email,
       phone: user.phone || '',
+      role: user.role,
+      status: user.status,
     };
 
     next();
@@ -78,6 +91,35 @@ export const authenticate = async (
     res.status(401).json({
       success: false,
       message: 'Invalid token',
+    });
+  }
+};
+
+// Admin authentication middleware
+export const authenticateAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // First run standard authentication
+    await authenticate(req, res, () => {});
+
+    // Check if user has admin role
+    if (!req.user || req.user.role !== 'admin') {
+      res.status(403).json({
+        success: false,
+        message: 'Admin access required',
+      });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error('Admin authentication error:', error);
+    res.status(403).json({
+      success: false,
+      message: 'Admin access denied',
     });
   }
 };

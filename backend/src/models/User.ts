@@ -58,6 +58,16 @@ const UserSchema = new Schema<IUser>({
     required: [true, 'Password is required'],
     minlength: [8, 'Password must be at least 8 characters long'],
     select: false, // Don't include password in queries by default
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  status: {
+    type: String,
+    enum: ['active', 'disabled'],
+    default: 'active'
   }
 }, {
   timestamps: true // This adds createdAt and updatedAt automatically

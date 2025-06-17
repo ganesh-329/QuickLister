@@ -62,7 +62,7 @@ export class SearchService {
     return {
       results,
       totalCount: response.pagination.total,
-      hasMore: response.pagination.page < response.pagination.totalPages
+      hasMore: response.pagination.page < response.pagination.pages
     };
   }
 

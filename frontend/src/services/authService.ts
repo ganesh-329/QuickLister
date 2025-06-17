@@ -28,6 +28,21 @@ export class AuthService {
     return response;
   }
 
+  // Admin login - uses dedicated admin endpoint
+  static async adminLogin(data: LoginData): Promise<AuthResponse> {
+    const response = await apiCall<AuthResponse>(
+      () => api.post('/admin/login', data)
+    );
+    
+    // Set auth token for future requests
+    setAuthToken(response.accessToken);
+    
+    // Store refresh token
+    localStorage.setItem('refresh_token', response.refreshToken);
+    
+    return response;
+  }
+
   // Register user
   static async register(data: RegisterData): Promise<AuthResponse> {
     const response = await apiCall<AuthResponse>(
@@ -103,6 +118,18 @@ export class AuthService {
       // Simple JWT expiry check (assuming standard JWT structure)
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  }
+
+  // Check if current user is admin
+  static async isAdmin(): Promise<boolean> {
+    try {
+      if (!this.isAuthenticated()) return false;
+      
+      const { user } = await this.getProfile();
+      return user.role === 'admin';
     } catch {
       return false;
     }
