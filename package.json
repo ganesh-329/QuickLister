@@ -12,7 +12,10 @@
     "build": "npm run build:frontend && npm run build:backend",
     "start:frontend": "cd frontend && npm run preview",
     "start:backend": "cd backend && npm start",
-    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\""
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
+    "vercel-build": "npm run build:frontend",
+    "deploy:check": "npm run build && echo '✅ Build successful - ready for deployment'",
+    "lint": "cd frontend && npm run lint && cd ../backend && npm run lint"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

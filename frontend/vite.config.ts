@@ -14,10 +14,21 @@ export default defineConfig({
   },
   // Enable client-side routing support for production builds
   build: {
+    outDir: 'dist',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          maps: ['@react-google-maps/api'],
+          icons: ['lucide-react', 'react-icons'],
+        },
       },
     },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
   },
 })

@@ -24,18 +24,25 @@ class SocketService {
   private socket: Socket | null = null;
   private listeners: Map<string, Function[]> = new Map();
 
-  connect(serverUrl: string = 'http://localhost:5000') {
-    console.log('SocketService connect called with URL:', serverUrl);
-    
+  connect(serverUrl?: string) {
     if (this.socket?.connected) {
-      console.log('Socket already connected');
+      console.log('🔗 Socket already connected');
       return;
     }
 
-    console.log('Creating new socket connection');
-    this.socket = io(serverUrl, {
-      transports: ['websocket', 'polling'],
-      autoConnect: true,
+    // Use environment variable or fallback to relative path for production
+    const socketUrl = serverUrl || 
+                     import.meta.env.VITE_SOCKET_URL || 
+                     (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
+
+    console.log('🔄 Connecting to socket server:', socketUrl);
+
+    this.socket = io(socketUrl, {
+      transports: ['websocket', 'polling'], // Fallback to polling for serverless
+      upgrade: true,
+      rememberUpgrade: false,
+      timeout: 20000,
+      forceNew: true,
     });
 
     this.socket.on('connect', () => {
