@@ -76,6 +76,24 @@ class ProfileService {
       );
     }
   }
+
+  // Delete user account
+  async deleteAccount(): Promise<void> {
+    try {
+      const response = await api.delete('/profile');
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to delete account');
+      }
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to delete account'
+      );
+    }
+  }
 }
 
 export default new ProfileService();

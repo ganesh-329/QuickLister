@@ -291,8 +291,16 @@ export const updateAvatar = async (req: Request, res: Response): Promise<void> =
 // Get avatar suggestions for user
 export const getAvatarSuggestions = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.user?.id);
-    
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
+
+    const user = await User.findById(userId).select('name');
     if (!user) {
       res.status(404).json({
         success: false,
@@ -302,70 +310,118 @@ export const getAvatarSuggestions = async (req: Request, res: Response): Promise
     }
 
     const initials = generateInitials(user.name);
-
-    // Predefined color palette
     const colors = [
-      '#4F46E5', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', 
-      '#06B6D4', '#EC4899', '#84CC16', '#6B7280'
+      { name: 'Blue', value: '#4F46E5' },
+      { name: 'Red', value: '#EF4444' },
+      { name: 'Green', value: '#10B981' },
+      { name: 'Yellow', value: '#F59E0B' },
+      { name: 'Purple', value: '#8B5CF6' },
+      { name: 'Cyan', value: '#06B6D4' },
+      { name: 'Pink', value: '#EC4899' },
+      { name: 'Lime', value: '#84CC16' },
+      { name: 'Gray', value: '#6B7280' }
     ];
 
-    // Job category options
-    const jobCategories = [
-      { icon: '🔧', name: 'Handyman/Repair' },
-      { icon: '🍳', name: 'Food/Cooking' },
-      { icon: '🚚', name: 'Delivery' },
-      { icon: '💻', name: 'Tech/Digital' },
-      { icon: '🧹', name: 'Cleaning' },
-      { icon: '🎨', name: 'Creative' },
-      { icon: '📚', name: 'Teaching/Tutoring' },
-      { icon: '🚗', name: 'Automotive' },
-      { icon: '⚡', name: 'Electrical' },
-      { icon: '🔨', name: 'Construction' }
+    // Job/profession related emojis
+    const jobEmojis = [
+      '👨‍💼', '👩‍💼', '👨‍💻', '👩‍💻', '👨‍🔧', '👩‍🔧',
+      '👨‍🎨', '👩‍🎨', '👨‍🏫', '👩‍🏫', '👨‍⚕️', '👩‍⚕️',
+      '👨‍🚀', '👩‍🚀', '👨‍🔬', '👩‍🔬', '🧑‍💼', '🧑‍💻',
+      '🧑‍🔧', '🧑‍🎨', '🧑‍🏫', '🧑‍⚕️', '🧑‍🚀', '🧑‍🔬'
     ];
 
-    // Emoji options
-    const emojiOptions = [
-      { emoji: '😊', name: 'Friendly' },
-      { emoji: '😎', name: 'Cool' },
-      { emoji: '🤝', name: 'Professional' },
-      { emoji: '💪', name: 'Strong' },
-      { emoji: '⭐', name: 'Star' },
-      { emoji: '🎯', name: 'Focused' },
-      { emoji: '💼', name: 'Business' },
-      { emoji: '🔥', name: 'Dynamic' },
-      { emoji: '✨', name: 'Creative' },
-      { emoji: '🚀', name: 'Ambitious' }
-    ];
-
-    // Generate initials suggestions with different colors
-    const initialsSuggestions = colors.map(color => ({
-      type: 'initials',
-      value: initials,
-      bg: color,
-      color: '#FFFFFF',
-      name: `${initials} (${getColorName(color)})`
-    }));
+    // Generate suggestions
+    const suggestions = {
+      initials: colors.map(color => ({
+        type: 'initials',
+        value: initials,
+        bg: color.value,
+        color: '#FFFFFF',
+        label: `${initials} on ${color.name}`,
+        description: `Your initials on ${getColorName(color.value)} background`
+      })),
+      emojis: jobEmojis.map(emoji => ({
+        type: 'emoji',
+        value: emoji,
+        bg: '#F3F4F6',
+        color: '#1F2937',
+        label: `${emoji} Emoji`,
+        description: `Use ${emoji} as your avatar`
+      }))
+    };
 
     res.json({
       success: true,
-      data: {
-        user: {
-          name: user.name,
-          initials
-        },
-        suggestions: {
-          initials: initialsSuggestions,
-          jobCategories,
-          emoji: emojiOptions
-        },
-        colorPalette: colors
-      }
+      data: suggestions
     });
   } catch (error) {
     console.error('Get avatar suggestions error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while getting avatar suggestions'
+      message: 'Server error while fetching avatar suggestions'
+    });
+  }
+};
+
+// Delete user account
+export const deleteAccount = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+      return;
+    }
+
+    // Find the user first
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+      return;
+    }
+
+    // Import models for cleanup (using dynamic imports to avoid circular dependencies)
+    const { Gig } = await import('../models/index.js');
+    const { Chat } = await import('../models/index.js');
+    const { Message } = await import('../models/index.js');
+
+    // Clean up related data
+    // 1. Delete all gigs created by the user
+    await Gig.deleteMany({ postedBy: userId });
+
+    // 2. Remove user from applications in other gigs
+    await Gig.updateMany(
+      { 'applications.user': userId },
+      { $pull: { applications: { user: userId } } }
+    );
+
+    // 3. Delete all chats where the user is a participant
+    const userChats = await Chat.find({ participants: userId });
+    const chatIds = userChats.map(chat => chat._id);
+    
+    // Delete all messages in those chats
+    await Message.deleteMany({ chat: { $in: chatIds } });
+    
+    // Delete the chats
+    await Chat.deleteMany({ participants: userId });
+
+    // 4. Finally delete the user account
+    await User.findByIdAndDelete(userId);
+
+    res.json({
+      success: true,
+      message: 'Account and all related data deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while deleting account'
     });
   }
 };

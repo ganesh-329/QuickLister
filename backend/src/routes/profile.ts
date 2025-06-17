@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, updateProfile, updateAvatar, getAvatarSuggestions } from '../controllers/profileController.js';
+import { getProfile, updateProfile, updateAvatar, getAvatarSuggestions, deleteAccount } from '../controllers/profileController.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
@@ -12,6 +12,9 @@ router.get('/', getProfile);
 
 // PUT /api/profile - Update user profile
 router.put('/', updateProfile);
+
+// DELETE /api/profile - Delete user account
+router.delete('/', deleteAccount);
 
 // POST /api/profile/avatar - Update profile avatar
 router.post('/avatar', updateAvatar);

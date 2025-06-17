@@ -17,8 +17,8 @@ const MapControls: React.FC<MapControlsProps> = ({
   isLocationPickerActive,
   hasManualLocation,
   mapRef,
-  searchRadius,
-  onRadiusChange
+  // searchRadius,
+  // onRadiusChange
 }) => {
   // Handle zoom in
   const handleZoomIn = () => {
@@ -45,15 +45,15 @@ const MapControls: React.FC<MapControlsProps> = ({
     }
   };
 
-  const handleRadiusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    onRadiusChange(value || null);
-  };
+  // const handleRadiusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = parseInt(e.target.value);
+  //   onRadiusChange(value || null);
+  // };
 
   return (
     <>
       {/* Main controls group (left side) */}
-      <div className="absolute left-6 top-32 z-[400] flex flex-col gap-3">
+      <div className="absolute left-6 top-8 z-[400] flex flex-col gap-3">
         {/* Zoom controls */}
         <button 
           className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none transition-all"
@@ -108,7 +108,7 @@ const MapControls: React.FC<MapControlsProps> = ({
       </div>
 
       {/* Radius Control */}
-      <div className="absolute left-4 top-4 flex flex-col gap-2">
+      {/* <div className="absolute left-4 top-4 flex flex-col gap-2">
         <div className="bg-white rounded-lg shadow-lg p-2">
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-500">Search Radius</label>
@@ -126,7 +126,7 @@ const MapControls: React.FC<MapControlsProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 };

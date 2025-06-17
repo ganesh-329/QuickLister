@@ -19,6 +19,7 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   verifyOTP: (otp: string) => Promise<void>;
   refreshAuth: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
   isLoading: boolean;
   error: string | null;
   isInitialized: boolean;
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   verifyOTP: async () => {},
   refreshAuth: async () => {},
+  updateUser: () => {},
   isLoading: false,
   error: null,
   isInitialized: false,
@@ -150,6 +152,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [logout]);
 
+  // Update user data in context
+  const updateUser = useCallback((userData: Partial<User>) => {
+    setAuthState(prev => {
+      if (!prev.user) return prev;
+      
+      const updatedUser = { ...prev.user, ...userData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      return {
+        ...prev,
+        user: updatedUser,
+      };
+    });
+  }, []);
+
   // Initialize auth state from localStorage on app load
   useEffect(() => {
     const initializeAuth = () => {
@@ -224,6 +241,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         verifyOTP,
         refreshAuth,
+        updateUser,
         isLoading,
         error,
         isInitialized,
