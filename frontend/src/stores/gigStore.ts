@@ -11,8 +11,7 @@ interface GigState {
   loading: boolean;
   error: string | null;
   
-  // Filters and search
-  filters: GetGigsParams;
+  // Search
   searchQuery: string;
   userLocation: { lat: number; lng: number } | null;
   
@@ -38,8 +37,6 @@ interface GigState {
   searchGigs: (query: string) => Promise<void>;
   
   // Utility actions
-  setFilters: (filters: Partial<GetGigsParams>) => void;
-  clearFilters: () => void;
   setUserLocation: (location: { lat: number; lng: number }) => void;
   setSelectedGig: (gig: Gig | null) => void;
   clearError: () => void;
@@ -55,7 +52,6 @@ export const useGigStore = create<GigState>()(
     loading: false,
     error: null,
     
-    filters: {},
     searchQuery: '',
     userLocation: null,
     
@@ -66,14 +62,13 @@ export const useGigStore = create<GigState>()(
       pages: 0,
     },
 
-    // Fetch all gigs with filters
+    // Fetch all gigs
     fetchGigs: async (params?: GetGigsParams) => {
       try {
         set({ loading: true, error: null });
         
-        const { filters, userLocation } = get();
+        const { userLocation } = get();
         const mergedParams = {
-          ...filters,
           ...params,
           ...(userLocation && { lat: userLocation.lat, lng: userLocation.lng }),
         };
@@ -93,8 +88,6 @@ export const useGigStore = create<GigState>()(
         });
       }
     },
-
-
 
     // Fetch gig by ID
     fetchGigById: async (id: string) => {
@@ -123,7 +116,7 @@ export const useGigStore = create<GigState>()(
         
         const response = await GigService.createGig(data);
         
-        // Add to gigs list if it matches current filters
+        // Add to gigs list
         const { gigs } = get();
         set({
           gigs: [response.gig, ...gigs],
@@ -313,22 +306,6 @@ export const useGigStore = create<GigState>()(
           gigs: [],
         });
       }
-    },
-
-    // Set filters
-    setFilters: (newFilters: Partial<GetGigsParams>) => {
-      const { filters } = get();
-      set({ 
-        filters: { ...filters, ...newFilters },
-      });
-    },
-
-    // Clear filters
-    clearFilters: () => {
-      set({ 
-        filters: {},
-        searchQuery: '',
-      });
     },
 
     // Set user location

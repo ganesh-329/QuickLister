@@ -21,12 +21,11 @@ const GOOGLE_MAPS_LIBRARIES: ('places')[] = ['places'];
 
 interface MapViewProps {
   searchQuery: string;
-  activeFilters: string[];
   selectedLocation?: google.maps.places.PlaceResult | null;
   onMapsApiLoaded?: (isLoaded: boolean) => void;
 }
 
-const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedLocation, onMapsApiLoaded }) => {
+const MapView: React.FC<MapViewProps> = ({ searchQuery, selectedLocation, onMapsApiLoaded }) => {
   // Get gigs from the store
   const { 
     gigs, 
@@ -48,7 +47,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
   const markerClustererRef = useRef<MarkerClusterer | null>(null);
   const [markerObjects, setMarkerObjects] = useState<google.maps.Marker[]>([]);
   const [searchRadius, setSearchRadius] = useState<number | null>(null);
-  const [filteredGigs, setFilteredGigs] = useState(gigs);
   const [isSearchOverlayActive, setIsSearchOverlayActive] = useState(false);
 
   // Load Google Maps API with static libraries array
@@ -83,22 +81,6 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
     setShowUserLocation(true);
     setSearchSelectedLocation(null);
   }, []);
-
-  // Filter gigs based on active filters
-  useEffect(() => {
-    if (activeFilters.length === 0) {
-      setFilteredGigs(gigs);
-      return;
-    }
-    
-    const filtered = gigs.filter(gig => {
-      return activeFilters.some(filter => 
-        gig.skills.some(skill => skill.name.toLowerCase().includes(filter.toLowerCase()))
-      );
-    });
-    
-    setFilteredGigs(filtered);
-  }, [gigs, activeFilters]);
 
   // Automatically get user's location on initial load or when navigating to Browse Jobs
   useEffect(() => {
@@ -186,7 +168,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
     }
   }, [mapRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update marker clustering when filtered gigs change
+  // Update marker clustering when gigs change
   useEffect(() => {
     if (!mapRef || !window.google) return;
     
@@ -202,7 +184,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
     // MarkerClusterer will be handled differently with custom components
     // For now, we'll render individual GigMarker components
     
-  }, [filteredGigs, mapRef, isLocationPickerActive]);
+  }, [gigs, mapRef, isLocationPickerActive]);
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = useCallback((lat1: number, lng1: number, lat2: number, lng2: number): number => {
@@ -225,7 +207,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
   useEffect(() => {
     if (searchRadius && searchRadius <= 15000) { // Only when radius is 15km or less
       const centerPoint = userDefinedLocation || center;
-      const gigsWithinRadius = filteredGigs.filter(gig => {
+      const gigsWithinRadius = gigs.filter(gig => {
         const distance = calculateDistance(
           centerPoint.lat,
           centerPoint.lng,
@@ -237,7 +219,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
       // Update UI to show number of gigs in radius
       console.log(`Found ${gigsWithinRadius.length} gigs within ${searchRadius}m radius`);
     }
-  }, [searchRadius, filteredGigs, userDefinedLocation, center, calculateDistance]);
+  }, [searchRadius, gigs, userDefinedLocation, center, calculateDistance]);
 
   // Handle selected location changes
   useEffect(() => {
@@ -274,9 +256,9 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
 
   // Handle selected gig click
   const handleGigClick = useCallback((gigId: string) => {
-    const gig = filteredGigs.find(g => g._id === gigId);
+    const gig = gigs.find(g => g._id === gigId);
     setSelectedGig(gig || null);
-  }, [filteredGigs, setSelectedGig]);
+  }, [gigs, setSelectedGig]);
 
   if (loadError) {
     return (
@@ -339,7 +321,7 @@ const MapView: React.FC<MapViewProps> = ({ searchQuery, activeFilters, selectedL
         )}
 
         {/* Render Gig Markers */}
-        {!isLocationPickerActive && filteredGigs.map((gig) => (
+        {!isLocationPickerActive && gigs.map((gig) => (
           <GigMarker
             key={gig._id}
             gig={gig}

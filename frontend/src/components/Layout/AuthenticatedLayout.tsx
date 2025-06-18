@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import LeftSidebar from './LeftSidebar';
-import RightPanel from './RightPanel';
 import FloatingActionButton from '../UI/FloatingActionButton';
 import FloatingChatbot from '../UI/FloatingChatbot';
 import { useAuth } from '../Auth';
@@ -11,8 +10,6 @@ interface AuthenticatedLayoutProps {
   children: React.ReactNode;
   searchQuery?: string;
   setSearchQuery?: (query: string) => void;
-  activeFilters?: string[];
-  setActiveFilters?: (filters: string[]) => void;
   isMapsApiLoaded?: boolean;
   onSearchSubmit?: (query: string) => void;
 }
@@ -21,8 +18,6 @@ function AuthenticatedLayout({
   children,
   searchQuery: externalSearchQuery,
   setSearchQuery: externalSetSearchQuery,
-  activeFilters: externalActiveFilters,
-  setActiveFilters: externalSetActiveFilters,
   isMapsApiLoaded: externalIsMapsApiLoaded,
   onSearchSubmit: externalOnSearchSubmit
 }: AuthenticatedLayoutProps) {
@@ -31,7 +26,6 @@ function AuthenticatedLayout({
     const saved = localStorage.getItem('sidebarOpen');
     return saved ? JSON.parse(saved) : false;
   });
-  const [rightPanelOpen, setRightPanelOpen] = React.useState(false);
 
   // Update localStorage when sidebar state changes
   React.useEffect(() => {
@@ -39,12 +33,9 @@ function AuthenticatedLayout({
   }, [sidebarOpen]);
   
   // Use external state if provided, otherwise use internal state
-  const [internalActiveFilters, setInternalActiveFilters] = React.useState<string[]>([]);
   const [internalSearchQuery, setInternalSearchQuery] = React.useState('');
   const [internalIsMapsApiLoaded] = React.useState(false);
   
-  const activeFilters = externalActiveFilters ?? internalActiveFilters;
-  const setActiveFilters = externalSetActiveFilters ?? setInternalActiveFilters;
   const searchQuery = externalSearchQuery ?? internalSearchQuery;
   const setSearchQuery = externalSetSearchQuery ?? setInternalSearchQuery;
   const isMapsApiLoaded = externalIsMapsApiLoaded ?? internalIsMapsApiLoaded;
@@ -81,7 +72,6 @@ function AuthenticatedLayout({
     <div className="flex flex-col h-screen w-full bg-gray-100 relative overflow-hidden">
       <TopBar 
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        toggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onLocationSelect={() => {}}
@@ -104,12 +94,6 @@ function AuthenticatedLayout({
             {children}
           </div>
         </main>
-        <RightPanel 
-          isOpen={rightPanelOpen}
-          setActiveFilters={setActiveFilters}
-          activeFilters={activeFilters}
-          onClose={() => setRightPanelOpen(false)}
-        />
       </div>
       <FloatingActionButton isAuthenticated={isAuthenticated} />
       <FloatingChatbot />

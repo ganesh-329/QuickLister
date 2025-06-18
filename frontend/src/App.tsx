@@ -136,7 +136,6 @@ function SignupFormWrapper() {
 // Enhanced layout wrapper that manages shared state for the map route
 function MapRouteWithSharedState() {
   // Shared state that will be passed to both AuthenticatedLayout and MapView
-  const [activeFilters, setActiveFilters] = React.useState<string[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedLocation] = React.useState<any>(null);
   const [isMapsApiLoaded, setIsMapsApiLoaded] = React.useState(false);
@@ -152,14 +151,11 @@ function MapRouteWithSharedState() {
     <AuthenticatedLayout
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
-      activeFilters={activeFilters}
-      setActiveFilters={setActiveFilters}
       isMapsApiLoaded={isMapsApiLoaded}
       onSearchSubmit={handleSearchSubmit}
     >
       <MapView 
         searchQuery={searchQuery}
-        activeFilters={activeFilters}
         selectedLocation={selectedLocation}
         onMapsApiLoaded={setIsMapsApiLoaded}
       />
